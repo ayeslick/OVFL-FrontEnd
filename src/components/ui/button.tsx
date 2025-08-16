@@ -16,7 +16,7 @@ const buttonVariants = cva(
         success: "bg-success text-success-foreground shadow-sm hover:bg-success/90 hover:shadow-md",
         warning: "bg-warning text-warning-foreground shadow-sm hover:bg-warning/90 hover:shadow-md",
         danger: "bg-danger text-danger-foreground shadow-sm hover:bg-danger/90 hover:shadow-md",
-        hero: "ovfl-gradient text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 animate-pulse-primary",
+        hero: "ovfl-gradient text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
