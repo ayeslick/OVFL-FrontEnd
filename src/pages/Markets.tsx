@@ -7,15 +7,22 @@ import { fetchPendleMarket, type MarketData } from '@/lib/pendle'
 export default function Markets() {
   const [marketData, setMarketData] = useState<MarketData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const loadMarketData = async () => {
       try {
         setIsLoading(true)
+        setError(null)
         const market = await fetchPendleMarket()
-        setMarketData(market)
+        if (!market) {
+          setError('Failed to load market data. Please try again later.')
+        } else {
+          setMarketData(market)
+        }
       } catch (error) {
         console.error('Failed to load market data:', error)
+        setError('Failed to load market data. Please try again later.')
       } finally {
         setIsLoading(false)
       }
@@ -79,6 +86,8 @@ export default function Markets() {
           <h2 className="text-2xl font-bold text-primary">Available Markets</h2>
           {isLoading ? (
             <div className="text-center text-muted-foreground py-8">Loading market data...</div>
+          ) : error ? (
+            <div className="text-center text-destructive py-8">{error}</div>
           ) : markets.length > 0 ? (
             <MarketsTable markets={markets} showFilters={false} />
           ) : (

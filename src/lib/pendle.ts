@@ -1,8 +1,8 @@
 // Pendle Backend API integration
 // API Documentation: https://api-docs-v2.pendle.finance/
 
-const PENDLE_API_BASE = 'https://api-v2.pendle.finance';
-const MARKET_ADDRESS = '0xc374f7ec85f8c7de3207a10bb1978ba104bda3b2'; // PT-weETH-26DEC2024
+const PENDLE_API_BASE = import.meta.env.VITE_PENDLE_API_BASE || 'https://api-v2.pendle.finance/core';
+const MARKET_ADDRESS = import.meta.env.VITE_PENDLE_MARKET_ADDRESS || '0xc374f7ec85f8c7de3207a10bb1978ba104bda3b2'; // PT-weETH-26DEC2024
 
 export interface PendleMarket {
   address: string;
@@ -48,7 +48,7 @@ export interface MarketData {
 export async function fetchPendleMarket(): Promise<MarketData | null> {
   try {
     // Fetch market data from Pendle API
-    const response = await fetch(`${PENDLE_API_BASE}/v2/markets/${MARKET_ADDRESS}`);
+    const response = await fetch(`${PENDLE_API_BASE}/markets/${MARKET_ADDRESS}`);
     
     if (!response.ok) {
       throw new Error(`Failed to fetch market data: ${response.status}`);
