@@ -9,14 +9,14 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "ovfl-gradient text-primary-foreground shadow-sm hover:shadow-md hover:scale-105 ovfl-shadow-primary",
-        secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary-hover hover:shadow-md border border-border",
-        outline: "border border-primary text-primary bg-transparent hover:bg-primary hover:text-primary-foreground shadow-sm hover:shadow-md",
-        ghost: "text-primary hover:bg-accent hover:text-accent-foreground",
+        default: "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-md",
+        secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 border border-border",
+        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
         success: "bg-success text-success-foreground shadow-sm hover:bg-success/90 hover:shadow-md",
         warning: "bg-warning text-warning-foreground shadow-sm hover:bg-warning/90 hover:shadow-md",
-        danger: "bg-danger text-danger-foreground shadow-sm hover:bg-danger/90 hover:shadow-md",
-        hero: "ovfl-gradient text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105",
+        danger: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 hover:shadow-md",
+        hero: "bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 hover:shadow-xl",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
