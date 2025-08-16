@@ -119,53 +119,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Call to Action Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-4xl font-bold text-primary mb-6">
-                Built for DeFi Natives
-              </h2>
-              <p className="text-xl text-muted-foreground mb-8">
-                OVFL provides a seamless experience for managing Principal Token positions 
-                with institutional-grade security and transparent yield distribution.
-              </p>
-              
-              <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 bg-success-light rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Shield className="w-4 h-4 text-success" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg">Secure & Audited</h3>
-                    <p className="text-muted-foreground">Smart contracts audited by top security firms</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 bg-primary-light/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Zap className="w-4 h-4 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg">Instant Liquidity</h3>
-                    <p className="text-muted-foreground">Get immediate access to your principal value</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 bg-warning-light rounded-lg flex items-center justify-center flex-shrink-0">
-                    <TrendingUp className="w-4 h-4 text-warning" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg">Continuous Yield</h3>
-                    <p className="text-muted-foreground">Earn streaming rewards until PT maturity</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="lg:text-right">
+          <div className="flex justify-center">
+            <div className="w-full max-w-md">
               <Card className="p-8 ovfl-shadow-lg">
                 <CardHeader>
                   <CardTitle className="text-2xl">Ready to get started?</CardTitle>
