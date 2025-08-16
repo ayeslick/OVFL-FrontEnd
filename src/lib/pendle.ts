@@ -3,6 +3,7 @@
 
 const PENDLE_API_BASE = import.meta.env.VITE_PENDLE_API_BASE || 'https://api-v2.pendle.finance/core';
 const MARKET_ADDRESS = import.meta.env.VITE_PENDLE_MARKET_ADDRESS || '0xc374f7ec85f8c7de3207a10bb1978ba104bda3b2'; // PT-weETH-26DEC2024
+const CHAIN_ID = import.meta.env.VITE_PENDLE_CHAIN_ID || '1';
 
 export interface PendleMarket {
   address: string;
@@ -46,16 +47,56 @@ export interface MarketData {
 }
 
 export async function fetchPendleMarket(): Promise<MarketData | null> {
-  try {
-    // Fetch market data from Pendle API
-    const response = await fetch(`${PENDLE_API_BASE}/markets/${MARKET_ADDRESS}`);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch market data: ${response.status}`);
-    }
+  const endpoints = [
+    `${PENDLE_API_BASE}/v2/markets/${MARKET_ADDRESS}?chainId=${CHAIN_ID}`,
+    `${PENDLE_API_BASE}/markets/${MARKET_ADDRESS}?chainId=${CHAIN_ID}`,
+    `${PENDLE_API_BASE}/v2/markets?chainId=${CHAIN_ID}`,
+    `${PENDLE_API_BASE}/markets?chainId=${CHAIN_ID}`
+  ];
 
-    const market: PendleMarket = await response.json();
-    
+  for (let i = 0; i < endpoints.length; i++) {
+    try {
+      const response = await fetch(endpoints[i]);
+      
+      if (!response.ok) {
+        console.debug(`Endpoint ${i + 1} failed with status: ${response.status}`);
+        continue;
+      }
+
+      const data = await response.json();
+      
+      // For list endpoints (3rd and 4th), filter for our market
+      if (i >= 2) {
+        const markets = Array.isArray(data) ? data : data.results || data.markets || [];
+        const market = markets.find((m: any) => 
+          m.address?.toLowerCase() === MARKET_ADDRESS.toLowerCase() ||
+          m.pt?.address?.toLowerCase() === MARKET_ADDRESS.toLowerCase()
+        );
+        
+        if (!market) {
+          console.debug(`Market not found in list from endpoint ${i + 1}`);
+          continue;
+        }
+        
+        console.debug('Successfully fetched market data from list endpoint');
+        return convertToMarketData(market);
+      } else {
+        // Direct market endpoint
+        console.debug('Successfully fetched market data from direct endpoint');
+        return convertToMarketData(data);
+      }
+    } catch (error) {
+      console.debug(`Endpoint ${i + 1} error:`, error);
+      continue;
+    }
+  }
+
+  console.error('All Pendle API endpoints failed');
+  return null;
+}
+
+function convertToMarketData(market: any): MarketData | null {
+  try {
     // Convert to our internal format
     const expiry = new Date(market.expiry);
     const now = new Date();
@@ -69,19 +110,19 @@ export async function fetchPendleMarket(): Promise<MarketData | null> {
     }
 
     return {
-      id: market.address,
-      name: market.name,
-      underlying: market.underlyingAsset.symbol,
+      id: market.address || MARKET_ADDRESS,
+      name: market.name || market.symbol || 'PT Market',
+      underlying: market.underlyingAsset?.symbol || market.underlying?.symbol || 'ETH',
       expiry,
-      currentRate: market.pt.price,
-      impliedAPY: market.impliedApy * 100, // Convert to percentage
-      tvl: market.liquidity.usd,
-      volume24h: market.volume.usd24h,
+      currentRate: market.pt?.price || market.price || 0,
+      impliedAPY: (market.impliedApy || market.apy || 0) * 100, // Convert to percentage
+      tvl: market.liquidity?.usd || market.tvl || 0,
+      volume24h: market.volume?.usd24h || market.volume24h || 0,
       status,
       daysToExpiry,
     };
   } catch (error) {
-    console.error('Failed to fetch Pendle market data:', error);
+    console.error('Failed to convert market data:', error);
     return null;
   }
 }
