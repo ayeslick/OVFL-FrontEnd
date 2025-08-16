@@ -211,23 +211,41 @@ export default function Markets() {
 
         {/* Info Section */}
         <Card className="mt-8 ovfl-shadow">
-          <CardHeader>
-            <CardTitle>About Principal Token Markets</CardTitle>
-            <CardDescription>
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">About Principal Token Markets</CardTitle>
+            <CardDescription className="text-base">
               Understanding how OVFL works with Pendle Principal Tokens
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="max-w-2xl mx-auto">
-            <div>
-              <h4 className="font-semibold mb-2">How It Works</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Principal Tokens (PTs) represent the principal value of yield-bearing assets</li>
-                <li>• Each PT is redeemable for 1 underlying token at maturity</li>
-                <li>• Current rate reflects the discount to face value</li>
-                <li>• OVFL converts this discount into streaming yield</li>
-              </ul>
-            </div>
+          <CardContent className="max-w-4xl mx-auto">
+            <div className="bg-muted/50 rounded-lg p-8">
+              <h4 className="text-lg font-semibold mb-6 text-center text-primary">How It Works</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex items-start gap-3">
+                  <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                  <p className="text-muted-foreground">
+                    <span className="font-medium text-foreground">Principal Tokens (PTs)</span> represent the principal value of yield-bearing assets
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                  <p className="text-muted-foreground">
+                    <span className="font-medium text-foreground">Redeemable at maturity</span> - each PT equals 1 underlying token
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                  <p className="text-muted-foreground">
+                    <span className="font-medium text-foreground">Current rate</span> reflects the discount to face value
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                  <p className="text-muted-foreground">
+                    <span className="font-medium text-foreground">OVFL converts</span> this discount into streaming yield
+                  </p>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
