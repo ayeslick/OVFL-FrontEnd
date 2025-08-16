@@ -111,7 +111,7 @@ export default function Deposit() {
 
   if (!displayConnected) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-background-secondary">
+      <div className="min-h-screen bg-background">
         <div className="flex items-center justify-center min-h-[80vh] px-4">
           <Card className="max-w-md w-full text-center ovfl-shadow-lg">
             <CardHeader>
