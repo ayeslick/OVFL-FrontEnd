@@ -11,7 +11,6 @@ import Home from "./pages/Home";
 import Portfolio from "./pages/Portfolio";
 import Deposit from "./pages/Deposit";
 import Markets from "./pages/Markets";
-import Testing from "./pages/Testing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,7 +28,7 @@ const App = () => (
             <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />
             <Route path="/deposit" element={<ProtectedRoute><Deposit /></ProtectedRoute>} />
             <Route path="/markets" element={<ProtectedRoute><Markets /></ProtectedRoute>} />
-            <Route path="/testing" element={<ProtectedRoute><Testing /></ProtectedRoute>} />
+            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
