@@ -25,7 +25,7 @@ export function WalletConnect() {
   const { connect, connectors, isPending } = useConnect()
   const { disconnect } = useDisconnect()
   const [isOpen, setIsOpen] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(true) // Default to logged in for demo
   const [showLoginDialog, setShowLoginDialog] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
