@@ -218,25 +218,16 @@ export default function Markets() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="font-semibold mb-2">How It Works</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Principal Tokens (PTs) represent the principal value of yield-bearing assets</li>
-                  <li>• Each PT is redeemable for 1 underlying token at maturity</li>
-                  <li>• Current rate reflects the discount to face value</li>
-                  <li>• OVFL converts this discount into streaming yield</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-2">Risk Considerations</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• PTs are locked until maturity date</li>
-                  <li>• Smart contract risk from underlying protocols</li>
-                  <li>• Market rate fluctuations before deposit</li>
-                  <li>• Consider time to expiry for yield optimization</li>
-                </ul>
-              </div>
+            <div className="max-w-2xl mx-auto">
+            <div>
+              <h4 className="font-semibold mb-2">How It Works</h4>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• Principal Tokens (PTs) represent the principal value of yield-bearing assets</li>
+                <li>• Each PT is redeemable for 1 underlying token at maturity</li>
+                <li>• Current rate reflects the discount to face value</li>
+                <li>• OVFL converts this discount into streaming yield</li>
+              </ul>
+            </div>
             </div>
           </CardContent>
         </Card>
