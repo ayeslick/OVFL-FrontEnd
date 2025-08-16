@@ -103,8 +103,9 @@ export async function fetchPendleMarket(): Promise<MarketData | null> {
 
 function convertToMarketData(market: any): MarketData | null {
   try {
-    // Convert to our internal format
-    const expiry = new Date(market.expiry);
+    // The API response doesn't include expiry, so we'll use a default future date
+    // In a real app, you'd need to get this from the market contract or another endpoint
+    const expiry = new Date('2024-12-26'); // Default to PT-weETH-26DEC2024 expiry
     const now = new Date();
     const daysToExpiry = Math.max(0, Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
     
@@ -117,13 +118,13 @@ function convertToMarketData(market: any): MarketData | null {
 
     return {
       id: market.address || MARKET_ADDRESS,
-      name: market.name || market.symbol || 'PT Market',
-      underlying: market.underlyingAsset?.symbol || market.underlying?.symbol || 'ETH',
+      name: market.name || market.symbol || 'PT weETH 26DEC2024',
+      underlying: market.underlyingAsset?.symbol || market.underlying?.symbol || 'weETH',
       expiry,
-      currentRate: market.pt?.price || market.price || 0,
+      currentRate: market.assetPriceUsd || market.pt?.price || market.price || 0,
       impliedAPY: (market.impliedApy || market.apy || 0) * 100, // Convert to percentage
       tvl: market.liquidity?.usd || market.tvl || 0,
-      volume24h: market.volume?.usd24h || market.volume24h || 0,
+      volume24h: market.tradingVolume?.usd || market.volume?.usd24h || market.volume24h || 0,
       status,
       daysToExpiry,
     };
