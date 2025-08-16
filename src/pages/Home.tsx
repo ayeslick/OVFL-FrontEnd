@@ -23,8 +23,8 @@ const steps = [
   },
   {
     icon: TrendingUp,
-    title: 'Earn Streaming Yield',
-    description: 'Enjoy continuous yield streaming via Sablier until PT maturity'
+    title: 'Borrow/Sell Streaming Yield',
+    description: 'Enjoy continuous yield streaming via Sablier that you can borrow/sell until PT maturity'
   }
 ]
 
