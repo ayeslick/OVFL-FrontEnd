@@ -37,13 +37,14 @@ export default function Home() {
         <div className="relative max-w-7xl mx-auto text-center">
           <div className="animate-fade-in">
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-primary mb-6 leading-tight">
-              Unlock Your
+              Trade Your
               <span className="block ovfl-gradient bg-clip-text text-transparent">
-                Principal Value
+                PT Yield
               </span>
             </h1>
             <p className="text-xl sm:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
-              OVFL transforms Pendle Principal Tokens into instant liquidity plus streaming yield. 
+              OVFL transforms Pendle Principal Tokens into instant liquidity plus streaming yield 
+              and sell/borrow against your streaming yield. 
               Deposit PTs, get immediate ovflETH, and earn through maturity.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
