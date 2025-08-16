@@ -11,27 +11,27 @@ import { PiggyBank, ArrowRight, AlertCircle, TrendingUp } from 'lucide-react'
 const mockMarkets = [
   {
     id: '1',
-    name: 'PT-weETH-26DEC2024',
+    name: 'PT-weETH-26DEC2025',
     token: 'PT-weETH',
-    expiry: '2024-12-26',
+    expiry: '2025-12-26',
     currentRate: '0.9234',
     apy: '8.7%',
     tvl: '$2.4M'
   },
   {
     id: '2', 
-    name: 'PT-ezETH-27MAR2025',
+    name: 'PT-ezETH-27MAR2026',
     token: 'PT-ezETH',
-    expiry: '2025-03-27',
+    expiry: '2026-03-27',
     currentRate: '0.9156',
     apy: '9.2%',
     tvl: '$1.8M'
   },
   {
     id: '3',
-    name: 'PT-rETH-28JUN2025',
+    name: 'PT-rETH-28JUN2026',
     token: 'PT-rETH', 
-    expiry: '2025-06-28',
+    expiry: '2026-06-28',
     currentRate: '0.9078',
     apy: '10.1%',
     tvl: '$3.1M'
@@ -265,7 +265,7 @@ export default function Deposit() {
                     </div>
                     <div className="flex justify-between pt-2 border-t">
                       <span className="text-muted-foreground">Stream ends in</span>
-                      <span className="font-mono">{Math.floor((new Date(selectedMarketData.expiry).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days</span>
+                      <span className="font-mono">{Math.max(0, Math.floor((new Date(selectedMarketData.expiry).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} days</span>
                     </div>
                   </div>
                 </>
