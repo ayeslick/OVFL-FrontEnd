@@ -134,13 +134,13 @@ export function MarketsTable({ markets, limit, showFilters = false }: MarketsTab
         </div>
       )}
 
-      <div className="border rounded-lg">
+      <div className="border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Market</TableHead>
+            <TableRow className="bg-muted/30">
+              <TableHead className="font-semibold">Market</TableHead>
               <TableHead 
-                className="cursor-pointer hover:bg-muted/50"
+                className="cursor-pointer hover:bg-muted/50 font-semibold"
                 onClick={() => handleSort('currentRate')}
               >
                 <div className="flex items-center gap-1">
@@ -148,9 +148,9 @@ export function MarketsTable({ markets, limit, showFilters = false }: MarketsTab
                   {getSortIcon('currentRate')}
                 </div>
               </TableHead>
-              <TableHead>Discount</TableHead>
+              <TableHead className="font-semibold">Discount</TableHead>
               <TableHead 
-                className="cursor-pointer hover:bg-muted/50"
+                className="cursor-pointer hover:bg-muted/50 font-semibold"
                 onClick={() => handleSort('impliedAPY')}
               >
                 <div className="flex items-center gap-1">
@@ -158,9 +158,9 @@ export function MarketsTable({ markets, limit, showFilters = false }: MarketsTab
                   {getSortIcon('impliedAPY')}
                 </div>
               </TableHead>
-              <TableHead>Maturity</TableHead>
+              <TableHead className="font-semibold">Maturity</TableHead>
               <TableHead 
-                className="cursor-pointer hover:bg-muted/50"
+                className="cursor-pointer hover:bg-muted/50 font-semibold"
                 onClick={() => handleSort('tvl')}
               >
                 <div className="flex items-center gap-1">
@@ -169,7 +169,7 @@ export function MarketsTable({ markets, limit, showFilters = false }: MarketsTab
                 </div>
               </TableHead>
               <TableHead 
-                className="cursor-pointer hover:bg-muted/50"
+                className="cursor-pointer hover:bg-muted/50 font-semibold"
                 onClick={() => handleSort('volume24h')}
               >
                 <div className="flex items-center gap-1">
@@ -177,7 +177,7 @@ export function MarketsTable({ markets, limit, showFilters = false }: MarketsTab
                   {getSortIcon('volume24h')}
                 </div>
               </TableHead>
-              <TableHead>Action</TableHead>
+              <TableHead className="font-semibold">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

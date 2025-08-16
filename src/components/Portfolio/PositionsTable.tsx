@@ -86,17 +86,17 @@ export function PositionsTable() {
   }
 
   return (
-    <div className="border rounded-lg">
+    <div className="border rounded-lg overflow-hidden">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>PT Market</TableHead>
-            <TableHead>Notional (PT)</TableHead>
-            <TableHead>ovflETH Minted</TableHead>
-            <TableHead>Accrued Stream</TableHead>
-            <TableHead>Remaining Days</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Action</TableHead>
+          <TableRow className="bg-muted/30">
+            <TableHead className="font-semibold">PT Market</TableHead>
+            <TableHead className="font-semibold">Notional (PT)</TableHead>
+            <TableHead className="font-semibold">ovflETH Minted</TableHead>
+            <TableHead className="font-semibold">Accrued Stream</TableHead>
+            <TableHead className="font-semibold">Remaining Days</TableHead>
+            <TableHead className="font-semibold">Status</TableHead>
+            <TableHead className="font-semibold">Action</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
