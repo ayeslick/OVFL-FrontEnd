@@ -65,44 +65,9 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Top Markets Table */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-primary">Top Markets</h2>
-              <Button asChild variant="outline">
-                <Link to="/markets">View All Markets</Link>
-              </Button>
-            </div>
-            <MarketsTable markets={topMarkets} limit={3} />
-          </div>
         </div>
       </section>
 
-      {/* Summary Stats */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-muted/30">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total Value Locked</CardTitle>
-                <div className="text-2xl font-bold">$127.5M</div>
-              </CardHeader>
-            </Card>
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Active Streams</CardTitle>
-                <div className="text-2xl font-bold">3,247</div>
-              </CardHeader>
-            </Card>
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Average APY</CardTitle>
-                <div className="text-2xl font-bold text-success">12.4%</div>
-              </CardHeader>
-            </Card>
-          </div>
-        </div>
-      </section>
     </div>
   )
 }

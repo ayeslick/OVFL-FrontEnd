@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAccount } from 'wagmi'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -7,50 +7,38 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { WalletConnect } from '@/components/Wallet/WalletConnect'
 import { useToast } from '@/hooks/use-toast'
 import { PiggyBank, ArrowRight, AlertCircle, TrendingUp } from 'lucide-react'
+import { fetchPendleMarket, type MarketData } from '@/lib/pendle'
 
-const mockMarkets = [
-  {
-    id: '1',
-    name: 'PT-weETH-26DEC2025',
-    token: 'PT-weETH',
-    expiry: '2025-12-26',
-    currentRate: '0.9234',
-    apy: '8.7%',
-    tvl: '$2.4M'
-  },
-  {
-    id: '2', 
-    name: 'PT-ezETH-27MAR2026',
-    token: 'PT-ezETH',
-    expiry: '2026-03-27',
-    currentRate: '0.9156',
-    apy: '9.2%',
-    tvl: '$1.8M'
-  },
-  {
-    id: '3',
-    name: 'PT-rETH-28JUN2026',
-    token: 'PT-rETH', 
-    expiry: '2026-06-28',
-    currentRate: '0.9078',
-    apy: '10.1%',
-    tvl: '$3.1M'
-  }
-]
 
 export default function Deposit() {
   const { isConnected } = useAccount()
-  const isConnectedDemo = true
-  const displayConnected = isConnectedDemo || isConnected
   const { toast } = useToast()
   const [selectedMarket, setSelectedMarket] = useState('')
   const [depositAmount, setDepositAmount] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [marketData, setMarketData] = useState<MarketData | null>(null)
+  const [isLoadingMarket, setIsLoadingMarket] = useState(true)
 
-  const selectedMarketData = mockMarkets.find(m => m.id === selectedMarket)
+  useEffect(() => {
+    const loadMarketData = async () => {
+      try {
+        setIsLoadingMarket(true)
+        const market = await fetchPendleMarket()
+        if (market) {
+          setMarketData(market)
+          setSelectedMarket(market.id)
+        }
+      } catch (error) {
+        console.error('Failed to load market data:', error)
+      } finally {
+        setIsLoadingMarket(false)
+      }
+    }
+    loadMarketData()
+  }, [])
 
   const calculatePreview = () => {
-    if (!selectedMarketData || !depositAmount || isNaN(Number(depositAmount))) {
+    if (!marketData || !depositAmount || isNaN(Number(depositAmount))) {
       return {
         instantLiquidity: 0,
         streamingYield: 0,
@@ -59,7 +47,7 @@ export default function Deposit() {
     }
 
     const amount = Number(depositAmount)
-    const rate = Number(selectedMarketData.currentRate)
+    const rate = marketData.currentRate
     const instantLiquidity = amount * rate * 0.95 // 95% instant liquidity
     const streamingYield = amount * rate * 0.05 // 5% streaming yield
     const fee = amount * 0.005 // 0.5% fee
@@ -72,7 +60,7 @@ export default function Deposit() {
   }
 
   const handleDeposit = async () => {
-    if (!selectedMarketData || !depositAmount) {
+    if (!marketData || !depositAmount) {
       toast({
         title: 'Invalid Input',
         description: 'Please select a market and enter an amount',
@@ -89,12 +77,11 @@ export default function Deposit() {
       
       toast({
         title: 'Deposit Successful!',
-        description: `Deposited ${depositAmount} ${selectedMarketData.token} successfully`,
+        description: `Deposited ${depositAmount} ${marketData.underlying} successfully`,
       })
       
       // Reset form
       setDepositAmount('')
-      setSelectedMarket('')
       
     } catch (error) {
       toast({
@@ -109,7 +96,7 @@ export default function Deposit() {
 
   const preview = calculatePreview()
 
-  if (!displayConnected) {
+  if (!isConnected) {
     return (
       <div className="min-h-screen bg-background">
         <div className="flex items-center justify-center min-h-[80vh] px-4">
@@ -158,42 +145,41 @@ export default function Deposit() {
             <CardContent className="space-y-6">
               {/* Market Selection */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Select Market</label>
-                <Select value={selectedMarket} onValueChange={setSelectedMarket}>
-                  <SelectTrigger className="z-50">
-                    <SelectValue placeholder="Choose a Principal Token market" />
-                  </SelectTrigger>
-                  <SelectContent className="z-50 bg-card border border-border shadow-lg">
-                    {mockMarkets.map((market) => (
-                      <SelectItem key={market.id} value={market.id}>
-                        <div className="flex items-center justify-between w-full">
-                          <span>{market.name}</span>
-                          <span className="text-success ml-2">{market.apy}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <label className="text-sm font-medium">Available Market</label>
+                {isLoadingMarket ? (
+                  <div className="text-sm text-muted-foreground">Loading market data...</div>
+                ) : marketData ? (
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <div className="font-medium">{marketData.name}</div>
+                    <div className="text-sm text-success">{marketData.impliedAPY.toFixed(1)}% APY</div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">No market data available</div>
+                )}
               </div>
 
               {/* Market Info */}
-              {selectedMarketData && (
+              {marketData && (
                 <div className="p-4 bg-muted/50 rounded-lg space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Current Rate</span>
-                    <span className="text-sm font-mono">{selectedMarketData.currentRate} ETH</span>
+                    <span className="text-sm font-mono">{marketData.currentRate.toFixed(4)} ETH</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">APY</span>
-                    <span className="text-sm font-mono text-success">{selectedMarketData.apy}</span>
+                    <span className="text-sm font-mono text-success">{marketData.impliedAPY.toFixed(1)}%</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Expiry</span>
-                    <span className="text-sm font-mono">{selectedMarketData.expiry}</span>
+                    <span className="text-sm font-mono">{marketData.expiry.toLocaleDateString()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">TVL</span>
-                    <span className="text-sm font-mono">{selectedMarketData.tvl}</span>
+                    <span className="text-sm font-mono">${(marketData.tvl / 1e6).toFixed(1)}M</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Days to Expiry</span>
+                    <span className="text-sm font-mono">{marketData.daysToExpiry}</span>
                   </div>
                 </div>
               )}
@@ -209,13 +195,13 @@ export default function Deposit() {
                   step="0.000001"
                   min="0"
                 />
-                {selectedMarketData && depositAmount && (
+                {marketData && depositAmount && (
                   <div className="text-sm text-muted-foreground">
-                    Price: {selectedMarketData.currentRate} PT/ETH • Discount: {((1 - Number(selectedMarketData.currentRate)) * 100).toFixed(2)}%
+                    Price: {marketData.currentRate.toFixed(4)} PT/ETH • Discount: {((1 - marketData.currentRate) * 100).toFixed(2)}%
                   </div>
                 )}
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Balance: 10.5 {selectedMarketData?.token || 'PT'}</span>
+                  <span>Balance: -- {marketData?.underlying || 'PT'}</span>
                   <button className="text-primary hover:underline">Max</button>
                 </div>
               </div>
@@ -223,7 +209,7 @@ export default function Deposit() {
               {/* Submit Button */}
               <Button 
                 onClick={handleDeposit}
-                disabled={!selectedMarket || !depositAmount || isLoading}
+                disabled={!marketData || !depositAmount || isLoading || isLoadingMarket}
                 className="w-full"
                 size="lg"
               >
@@ -239,11 +225,11 @@ export default function Deposit() {
               <CardTitle className="text-xl">Transaction Preview</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {selectedMarketData && depositAmount ? (
+              {marketData && depositAmount ? (
                 <>
                   {/* Price Info */}
                   <div className="text-sm text-muted-foreground mb-4">
-                    Price: {selectedMarketData.currentRate} PT/ETH • Discount: {((1 - Number(selectedMarketData.currentRate)) * 100).toFixed(2)}%
+                    Price: {marketData.currentRate.toFixed(4)} PT/ETH • Discount: {((1 - marketData.currentRate) * 100).toFixed(2)}%
                   </div>
                   
                   <div className="space-y-3">
@@ -265,13 +251,13 @@ export default function Deposit() {
                     </div>
                     <div className="flex justify-between pt-2 border-t">
                       <span className="text-muted-foreground">Stream ends in</span>
-                      <span className="font-mono">{Math.max(0, Math.floor((new Date(selectedMarketData.expiry).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} days</span>
+                      <span className="font-mono">{marketData.daysToExpiry} days</span>
                     </div>
                   </div>
                 </>
               ) : (
                 <div className="text-center text-muted-foreground py-8">
-                  Select a market and enter an amount to see preview
+                  {isLoadingMarket ? 'Loading market data...' : 'Enter an amount to see preview'}
                 </div>
               )}
             </CardContent>

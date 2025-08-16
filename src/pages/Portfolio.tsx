@@ -6,13 +6,39 @@ import { StreamsList } from '@/components/Portfolio/StreamsList'
 import { PositionsTable } from '@/components/Portfolio/PositionsTable'
 import { WalletConnect } from '@/components/Wallet/WalletConnect'
 import { TrendingUp, Wallet } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { getTotalWithdrawableAmount, getActiveStreamsCount } from '@/lib/sablier'
 
 export default function Portfolio() {
-  const { isConnected } = useAccount()
-  const isConnectedDemo = true
-  const displayConnected = isConnectedDemo || isConnected
+  const { isConnected, address } = useAccount()
+  const [claimableAmount, setClaimableAmount] = useState<bigint>(0n)
+  const [activeStreamsCount, setActiveStreamsCount] = useState<number>(0)
+  const [isLoading, setIsLoading] = useState(true)
 
-  if (!displayConnected) {
+  useEffect(() => {
+    if (isConnected && address) {
+      const fetchPortfolioData = async () => {
+        try {
+          setIsLoading(true)
+          const [totalWithdrawable, streamsCount] = await Promise.all([
+            getTotalWithdrawableAmount(address),
+            getActiveStreamsCount(address)
+          ])
+          setClaimableAmount(totalWithdrawable)
+          setActiveStreamsCount(streamsCount)
+        } catch (error) {
+          console.error('Failed to fetch portfolio data:', error)
+        } finally {
+          setIsLoading(false)
+        }
+      }
+      fetchPortfolioData()
+    } else {
+      setIsLoading(false)
+    }
+  }, [isConnected, address])
+
+  if (!isConnected) {
     return (
       <div className="min-h-screen bg-background">
         <div className="flex items-center justify-center min-h-[80vh] px-4">
@@ -47,25 +73,20 @@ export default function Portfolio() {
         </div>
 
         {/* Summary Bar */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">ovflETH Balance</CardTitle>
-              <div className="text-2xl font-bold">32.4567 ovflETH</div>
-            </CardHeader>
-          </Card>
-          
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">          
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">Claimable Now</CardTitle>
-              <div className="text-2xl font-bold text-success">2.1234 ETH</div>
+              <div className="text-2xl font-bold text-success">
+                {isLoading ? '...' : `${(Number(claimableAmount) / 1e18).toFixed(4)} ETH`}
+              </div>
             </CardHeader>
           </Card>
           
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">Active Streams</CardTitle>
-              <div className="text-2xl font-bold">3</div>
+              <div className="text-2xl font-bold">{isLoading ? '...' : activeStreamsCount}</div>
             </CardHeader>
           </Card>
         </div>
@@ -81,9 +102,6 @@ export default function Portfolio() {
           <TabsContent value="positions" className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-primary">Your Positions</h2>
-              <div className="text-sm text-muted-foreground">
-                3 active positions
-              </div>
             </div>
             <PositionsTable />
           </TabsContent>
@@ -100,81 +118,10 @@ export default function Portfolio() {
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-primary">Transaction History</h2>
             </div>
-            <div className="space-y-4">
-              {/* Mock Transaction History */}
-              {[
-                {
-                  id: '1',
-                  type: 'Deposit',
-                  amount: '5.2500 PT-weETH',
-                  timestamp: new Date(Date.now() - 86400000 * 2).toISOString(),
-                  status: 'Completed',
-                  txHash: '0x1234...5678'
-                },
-                {
-                  id: '2',
-                  type: 'Withdrawal',
-                  amount: '0.3420 ETH',
-                  timestamp: new Date(Date.now() - 86400000 * 5).toISOString(),
-                  status: 'Completed',
-                  txHash: '0x9876...4321'
-                },
-                {
-                  id: '3',
-                  type: 'Deposit',
-                  amount: '2.1000 PT-ezETH',
-                  timestamp: new Date(Date.now() - 86400000 * 8).toISOString(),
-                  status: 'Completed',
-                  txHash: '0xabcd...efgh'
-                },
-                {
-                  id: '4',
-                  type: 'Withdrawal',
-                  amount: '1.2500 ETH',
-                  timestamp: new Date(Date.now() - 86400000 * 12).toISOString(),
-                  status: 'Completed',
-                  txHash: '0xijkl...mnop'
-                }
-              ].map((tx) => (
-                <Card key={tx.id}>
-                  <CardContent className="py-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          tx.type === 'Deposit' ? 'bg-success/10 text-success' : 'bg-primary/10 text-primary'
-                        }`}>
-                          {tx.type === 'Deposit' ? (
-                            <TrendingUp className="w-5 h-5" />
-                          ) : (
-                            <Wallet className="w-5 h-5" />
-                          )}
-                        </div>
-                        <div>
-                          <div className="font-semibold">{tx.type}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {new Date(tx.timestamp).toLocaleDateString()} at {new Date(tx.timestamp).toLocaleTimeString()}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-semibold">
-                          {tx.type === 'Deposit' ? '+' : '-'}{tx.amount}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          <a 
-                            href={`https://etherscan.io/tx/${tx.txHash}`} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline"
-                          >
-                            {tx.txHash}
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+            <div className="text-center text-muted-foreground py-12">
+              <Wallet className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>No transaction history available yet</p>
+              <p className="text-sm">Your OVFL transactions will appear here</p>
             </div>
           </TabsContent>
         </Tabs>

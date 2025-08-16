@@ -11,30 +11,22 @@ import {
 import { useState } from 'react'
 
 export function WalletConnect() {
-  // Simulate connected wallet state for demo
-  const mockAddress = "0x742d35Cc6635C0532925a3b8D13b1234567890AB"
-  const isConnectedDemo = true
-  
   const { address, isConnected } = useAccount()
   const { connect, connectors, isPending } = useConnect()
   const { disconnect } = useDisconnect()
   const [isOpen, setIsOpen] = useState(false)
 
-  // Use demo state to show connected experience
-  const displayAddress = isConnectedDemo ? mockAddress : address
-  const displayConnected = isConnectedDemo || isConnected
-
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`
   }
 
-  if (displayConnected && displayAddress) {
+  if (isConnected && address) {
     return (
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" className="flex items-center gap-2">
             <Wallet className="w-4 h-4" />
-            {formatAddress(displayAddress)}
+            {formatAddress(address)}
             <ChevronDown className="w-4 h-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -44,7 +36,7 @@ export function WalletConnect() {
               <Wallet className="w-4 h-4 text-white" />
             </div>
             <div>
-              <p className="font-medium">{formatAddress(displayAddress)}</p>
+              <p className="font-medium">{formatAddress(address)}</p>
               <p className="text-sm text-muted-foreground">Connected</p>
             </div>
           </DropdownMenuItem>
