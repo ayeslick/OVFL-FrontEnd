@@ -38,6 +38,8 @@ const mockStreams = [
 
 export function StreamsList() {
   const { address, isConnected } = useAccount()
+  const isConnectedDemo = true
+  const displayConnected = isConnectedDemo || isConnected
   const { toast } = useToast()
   const [streams, setStreams] = useState(mockStreams)
   const [loading, setLoading] = useState(false)
@@ -155,7 +157,7 @@ export function StreamsList() {
     }
   }
 
-  if (!isConnected) {
+  if (!displayConnected) {
     return null
   }
 
@@ -185,7 +187,7 @@ export function StreamsList() {
         const countdownStatus = getCountdownStatus(stream.endTime)
 
         return (
-          <Card key={stream.id} className="ovfl-shadow hover:ovfl-shadow-lg transition-all duration-300">
+          <Card key={stream.id} className="shadow hover:shadow-lg transition-all duration-300">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">Stream #{stream.id}</CardTitle>
@@ -204,7 +206,7 @@ export function StreamsList() {
                 </div>
                 <div className="w-full bg-muted rounded-full h-2">
                   <div 
-                    className="h-2 ovfl-gradient rounded-full transition-all duration-500"
+                    className="h-2 bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-500"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -232,9 +234,9 @@ export function StreamsList() {
 
               {/* Countdown */}
               <div className={`p-3 rounded-lg flex items-center gap-2 ${
-                countdownStatus === 'critical' ? 'bg-danger-light text-danger' :
-                countdownStatus === 'warning' ? 'bg-warning-light text-warning' :
-                'bg-success-light text-success'
+                countdownStatus === 'critical' ? 'bg-destructive/10 text-destructive' :
+                countdownStatus === 'warning' ? 'bg-warning/10 text-warning' :
+                'bg-success/10 text-success'
               }`}>
                 {countdownStatus === 'critical' && <AlertTriangle className="w-4 h-4" />}
                 {countdownStatus === 'warning' && <Clock className="w-4 h-4" />}
