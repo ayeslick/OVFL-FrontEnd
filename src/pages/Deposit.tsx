@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { WalletConnect } from '@/components/Wallet/WalletConnect'
 import { useToast } from '@/hooks/use-toast'
 import { PiggyBank, ArrowRight, AlertCircle, TrendingUp } from 'lucide-react'
 import { fetchPendleMarket, type MarketData } from '@/lib/pendle'
@@ -96,28 +95,6 @@ export default function Deposit() {
 
   const preview = calculatePreview()
 
-  if (!isConnected) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="flex items-center justify-center min-h-[80vh] px-4">
-          <Card className="max-w-md w-full text-center ovfl-shadow-lg">
-            <CardHeader>
-              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                <PiggyBank className="w-8 h-8 text-primary" />
-              </div>
-              <CardTitle className="text-2xl">Connect Your Wallet</CardTitle>
-              <CardDescription className="text-base">
-                Connect your wallet to start depositing Principal Tokens and earning yield
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <WalletConnect />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="min-h-screen bg-background">

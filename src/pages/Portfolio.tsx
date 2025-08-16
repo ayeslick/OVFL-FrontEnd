@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { StreamsList } from '@/components/Portfolio/StreamsList'
 import { PositionsTable } from '@/components/Portfolio/PositionsTable'
-import { WalletConnect } from '@/components/Wallet/WalletConnect'
 import { TrendingUp, Wallet } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { getTotalWithdrawableAmount, getActiveStreamsCount } from '@/lib/sablier'
@@ -38,28 +37,6 @@ export default function Portfolio() {
     }
   }, [isConnected, address])
 
-  if (!isConnected) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="flex items-center justify-center min-h-[80vh] px-4">
-          <Card className="ovfl-card max-w-md w-full text-center">
-            <CardHeader>
-              <div className="mx-auto w-16 h-16 bg-primary/20 rounded-lg flex items-center justify-center mb-4">
-                <TrendingUp className="w-8 h-8 text-primary" />
-              </div>
-              <CardTitle className="text-2xl">Connect Your Wallet</CardTitle>
-              <CardDescription className="text-base">
-                Connect your wallet to view and manage your OVFL portfolio and active streams
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <WalletConnect />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="min-h-screen bg-background">
