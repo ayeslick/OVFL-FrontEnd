@@ -40,6 +40,9 @@ const mockMarkets = [
 
 export default function Deposit() {
   const { isConnected } = useAccount()
+  // Simulate connected wallet for demo
+  const isConnectedDemo = true
+  const displayConnected = isConnectedDemo || isConnected
   const { toast } = useToast()
   const [selectedMarket, setSelectedMarket] = useState('')
   const [amount, setAmount] = useState('')
@@ -113,7 +116,7 @@ export default function Deposit() {
 
   const preview = calculatePreview()
 
-  if (!isConnected) {
+  if (!displayConnected) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-background-secondary">
         <div className="flex items-center justify-center min-h-[80vh] px-4">
