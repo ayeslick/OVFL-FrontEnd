@@ -162,7 +162,7 @@
   }
 
   .animate-pulse-primary {
-    animation: pulse-primary 2s infinite;
+    animation: pulse-primary 4s infinite;
   }
 }
 
