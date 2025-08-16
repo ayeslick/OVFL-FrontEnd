@@ -167,10 +167,10 @@ export default function Deposit() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Select Market</label>
                 <Select value={selectedMarket} onValueChange={setSelectedMarket}>
-                  <SelectTrigger>
+                  <SelectTrigger className="z-50">
                     <SelectValue placeholder="Choose a Principal Token market" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-50 bg-card border border-border shadow-lg">
                     {mockMarkets.map((market) => (
                       <SelectItem key={market.id} value={market.id}>
                         <div className="flex items-center justify-between w-full">
@@ -208,19 +208,14 @@ export default function Deposit() {
               {/* Amount Input */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Amount</label>
-                <div className="relative">
-                  <Input
-                    type="number"
-                    placeholder="0.0"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    step="0.000001"
-                    min="0"
-                  />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                    {selectedMarketData?.token || 'PT'}
-                  </div>
-                </div>
+                <Input
+                  type="number"
+                  placeholder="0.0"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  step="0.000001"
+                  min="0"
+                />
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Balance: 10.5 {selectedMarketData?.token || 'PT'}</span>
                   <button className="text-primary hover:underline">Max</button>
@@ -300,7 +295,7 @@ export default function Deposit() {
                 <AlertCircle className="w-4 h-4 text-warning mt-0.5 flex-shrink-0" />
                 <div className="text-xs text-warning">
                   <p className="font-medium">Important:</p>
-                  <p>Once deposited, your tokens will be locked until the stream completes. You can withdraw accrued amounts but cannot recover the principal until maturity.</p>
+                  <p>Once deposited, your tokens will be locked until the stream completes.</p>
                 </div>
               </div>
             </CardContent>
