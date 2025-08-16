@@ -2,69 +2,73 @@
 @tailwind components;
 @tailwind utilities;
 
-/* OVFL Design System - Curve Finance Inspired */
+/* OVFL Design System - Curve Finance Terminal Style */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
 
 @layer base {
   :root {
-    /* Background System */
-    --background: 220 15% 98%;
-    --background-secondary: 220 15% 96%;
-    --foreground: 220 25% 15%;
+    /* Terminal Background System */
+    --background: 222 25% 8%;           /* Dark terminal background */
+    --background-secondary: 222 25% 10%; /* Slightly lighter */
+    --foreground: 195 100% 85%;         /* Terminal green-blue text */
 
-    /* Card System */
-    --card: 0 0% 100%;
-    --card-foreground: 220 25% 15%;
-    --card-border: 220 15% 90%;
+    /* Card System - Terminal style */
+    --card: 222 25% 12%;
+    --card-foreground: 195 100% 85%;
+    --card-border: 200 50% 25%;         /* Blue terminal border */
 
-    /* OVFL Brand Colors - Primary Blues */
-    --primary: 220 75% 35%; /* #0445af equivalent */
-    --primary-light: 215 85% 55%; /* #2e7de6 equivalent */
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 220 75% 30%;
+    /* OVFL Brand Colors - Terminal Blues & Cyans */
+    --primary: 200 100% 60%;            /* Bright cyan blue */
+    --primary-light: 180 100% 70%;      /* Lighter cyan */
+    --primary-foreground: 222 25% 8%;   /* Dark text on blue */
+    --primary-hover: 200 100% 65%;
 
-    /* Secondary Brand Colors */
-    --secondary: 220 15% 96%;
-    --secondary-foreground: 220 25% 25%;
-    --secondary-hover: 220 15% 94%;
+    /* Secondary Brand Colors - Terminal style */
+    --secondary: 222 25% 15%;
+    --secondary-foreground: 195 100% 85%;
+    --secondary-hover: 222 25% 18%;
 
-    /* Success & Status Colors */
-    --success: 142 70% 45%;
-    --success-foreground: 0 0% 100%;
-    --success-light: 142 70% 95%;
+    /* Success & Status Colors - Terminal green */
+    --success: 120 100% 45%;            /* Bright terminal green */
+    --success-foreground: 222 25% 8%;
+    --success-light: 120 100% 15%;
 
-    --warning: 45 90% 55%;
-    --warning-foreground: 0 0% 100%;
-    --warning-light: 45 90% 95%;
+    --warning: 60 100% 55%;             /* Terminal yellow */
+    --warning-foreground: 222 25% 8%;
+    --warning-light: 60 100% 15%;
 
-    --danger: 0 75% 55%;
-    --danger-foreground: 0 0% 100%;
-    --danger-light: 0 75% 95%;
+    --danger: 0 100% 60%;               /* Bright terminal red */
+    --danger-foreground: 222 25% 8%;
+    --danger-light: 0 100% 15%;
 
-    /* Muted Colors */
-    --muted: 220 15% 94%;
-    --muted-foreground: 220 15% 45%;
+    /* Muted Colors - Terminal style */
+    --muted: 222 25% 18%;
+    --muted-foreground: 195 50% 65%;
 
-    /* Accent Colors */
-    --accent: 220 15% 92%;
-    --accent-foreground: 220 25% 25%;
+    /* Accent Colors - Terminal highlights */
+    --accent: 280 100% 40%;             /* Purple accent */
+    --accent-foreground: 195 100% 85%;
 
-    /* Border & Input */
-    --border: 220 15% 88%;
-    --input: 220 15% 88%;
-    --input-focus: 220 75% 35%;
-    --ring: 220 75% 35%;
+    /* Border & Input - Terminal style */
+    --border: 200 50% 25%;
+    --input: 222 25% 15%;
+    --input-focus: 200 100% 60%;
+    --ring: 200 100% 60%;
 
-    /* Gradients */
+    /* Terminal Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-light)));
-    --gradient-subtle: linear-gradient(180deg, hsl(var(--background)), hsl(var(--background-secondary)));
+    --gradient-terminal: linear-gradient(180deg, hsl(var(--background)), hsl(var(--background-secondary)));
+    --gradient-glow: linear-gradient(135deg, hsl(200 100% 60% / 0.3), hsl(180 100% 70% / 0.3));
 
-    /* Shadows */
-    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-    --shadow: 0 4px 12px 0 rgb(0 0 0 / 0.08);
-    --shadow-lg: 0 8px 24px 0 rgb(0 0 0 / 0.12);
-    --shadow-primary: 0 4px 16px 0 hsl(var(--primary) / 0.2);
+    /* Terminal Shadows & Glows */
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.3);
+    --shadow: 0 4px 12px 0 rgb(0 0 0 / 0.5);
+    --shadow-lg: 0 8px 24px 0 rgb(0 0 0 / 0.7);
+    --shadow-primary: 0 4px 16px 0 hsl(var(--primary) / 0.4);
+    --shadow-glow: 0 0 20px hsl(var(--primary) / 0.3);
+    --shadow-terminal: inset 0 0 20px hsl(200 100% 60% / 0.1);
 
     /* Radius */
     --radius: 0.75rem;
@@ -133,8 +137,11 @@
   }
 
   body {
-    @apply bg-background text-foreground font-inter;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    @apply bg-background text-foreground;
+    font-family: 'JetBrains Mono', 'Inter', monospace, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-image: 
+      radial-gradient(circle at 25% 25%, hsl(200 100% 60% / 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 75% 75%, hsl(180 100% 70% / 0.05) 0%, transparent 50%);
   }
 
   /* Custom animations */
@@ -167,9 +174,14 @@
 }
 
 @layer components {
-  /* OVFL Component System */
+  /* OVFL Terminal Component System */
   .ovfl-gradient {
     background: var(--gradient-primary);
+  }
+
+  .ovfl-terminal-glow {
+    background: var(--gradient-glow);
+    box-shadow: var(--shadow-glow);
   }
 
   .ovfl-shadow {
@@ -185,18 +197,60 @@
   }
 
   .ovfl-card {
-    @apply bg-card border border-card-border rounded-xl ovfl-shadow;
+    @apply bg-card border border-card-border rounded-lg;
+    box-shadow: var(--shadow-terminal), var(--shadow);
+    background: linear-gradient(135deg, hsl(var(--card)), hsl(222 25% 14%));
   }
 
   .ovfl-button-primary {
-    @apply bg-primary hover:bg-primary-hover text-primary-foreground px-6 py-3 rounded-lg font-semibold transition-all duration-200 ovfl-shadow-primary;
+    @apply bg-primary hover:bg-primary-hover text-primary-foreground px-6 py-3 rounded-lg font-mono font-semibold transition-all duration-200;
+    box-shadow: var(--shadow-glow), 0 0 0 1px hsl(var(--primary) / 0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
   .ovfl-button-secondary {
-    @apply bg-secondary hover:bg-secondary-hover text-secondary-foreground px-6 py-3 rounded-lg font-semibold transition-all duration-200 border border-border;
+    @apply bg-secondary hover:bg-secondary-hover text-secondary-foreground px-6 py-3 rounded-lg font-mono font-semibold transition-all duration-200 border border-border;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
   .ovfl-input {
-    @apply bg-card border border-input px-4 py-3 rounded-lg text-foreground placeholder:text-muted-foreground focus:border-input-focus focus:ring-2 focus:ring-ring focus:ring-opacity-20 transition-all duration-200;
+    @apply bg-input border border-border px-4 py-3 rounded-lg text-foreground placeholder:text-muted-foreground font-mono transition-all duration-200;
+    box-shadow: var(--shadow-terminal);
+  }
+
+  .ovfl-input:focus {
+    @apply border-input-focus;
+    box-shadow: var(--shadow-terminal), 0 0 0 2px hsl(var(--primary) / 0.3);
+  }
+
+  /* Terminal text effects */
+  .terminal-text {
+    font-family: 'JetBrains Mono', monospace;
+    text-shadow: 0 0 10px currentColor;
+  }
+
+  .terminal-glow {
+    text-shadow: 
+      0 0 5px currentColor,
+      0 0 10px currentColor,
+      0 0 15px currentColor;
+  }
+
+  /* Retro scan lines effect */
+  .scan-lines::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      transparent 50%,
+      hsl(200 100% 60% / 0.03) 50%
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
   }
 }
