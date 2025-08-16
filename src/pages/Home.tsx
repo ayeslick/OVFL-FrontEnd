@@ -30,10 +30,10 @@ const steps = [
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-background-secondary">
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative py-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-primary-light/5" />
+        <div className="absolute inset-0 bg-primary/5" />
         <div className="relative max-w-7xl mx-auto text-center">
           <div className="animate-fade-in">
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-primary mb-6 leading-tight">
@@ -87,7 +87,7 @@ export default function Home() {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-background-secondary">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-background-secondary/50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-primary mb-4">How OVFL Works</h2>
@@ -100,7 +100,7 @@ export default function Home() {
             {steps.map((step, index) => {
               const Icon = step.icon
               return (
-                <Card key={index} className="text-center p-8 hover:shadow-lg transition-shadow duration-300">
+                <Card key={index} className="ovfl-card text-center p-8 hover:shadow-lg transition-shadow duration-300">
                   <CardHeader>
                     <div className="mx-auto w-16 h-16 ovfl-gradient rounded-full flex items-center justify-center mb-4">
                       <Icon className="w-8 h-8 text-white" />
@@ -124,7 +124,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-center">
             <div className="w-full max-w-md">
-              <Card className="p-8 ovfl-shadow-lg">
+              <Card className="ovfl-card p-8">
                 <CardHeader>
                   <CardTitle className="text-2xl">Ready to get started?</CardTitle>
                   <CardDescription>

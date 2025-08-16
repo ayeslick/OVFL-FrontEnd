@@ -9,66 +9,65 @@
 
 @layer base {
   :root {
-    /* Terminal Background System */
-    --background: 222 25% 8%;           /* Dark terminal background */
-    --background-secondary: 222 25% 10%; /* Slightly lighter */
-    --foreground: 195 100% 85%;         /* Terminal green-blue text */
+    /* Curve-inspired Dark Theme */
+    --background: 222 47% 7%;              /* Deep dark blue */
+    --background-secondary: 222 47% 9%;    /* Slightly lighter */
+    --foreground: 210 40% 98%;             /* Clean white text */
 
-    /* Card System - Terminal style */
-    --card: 222 25% 12%;
-    --card-foreground: 195 100% 85%;
-    --card-border: 200 50% 25%;         /* Blue terminal border */
+    /* Card System */
+    --card: 222 47% 11%;                   /* Dark cards */
+    --card-foreground: 210 40% 98%;
+    --card-border: 222 47% 15%;            /* Subtle borders */
 
-    /* OVFL Brand Colors - Terminal Blues & Cyans */
-    --primary: 200 100% 60%;            /* Bright cyan blue */
-    --primary-light: 180 100% 70%;      /* Lighter cyan */
-    --primary-foreground: 222 25% 8%;   /* Dark text on blue */
-    --primary-hover: 200 100% 65%;
+    /* Primary Blues - Curve style */
+    --primary: 210 100% 60%;               /* Bright blue */
+    --primary-light: 200 100% 70%;         /* Lighter blue */
+    --primary-foreground: 222 47% 7%;      /* Dark text on blue */
+    --primary-hover: 210 100% 65%;
 
-    /* Secondary Brand Colors - Terminal style */
-    --secondary: 222 25% 15%;
-    --secondary-foreground: 195 100% 85%;
-    --secondary-hover: 222 25% 18%;
+    /* Secondary */
+    --secondary: 222 47% 15%;
+    --secondary-foreground: 210 40% 98%;
+    --secondary-hover: 222 47% 18%;
 
-    /* Success & Status Colors - Terminal green */
-    --success: 120 100% 45%;            /* Bright terminal green */
-    --success-foreground: 222 25% 8%;
-    --success-light: 120 100% 15%;
+    /* Status Colors */
+    --success: 142 76% 36%;                /* Green */
+    --success-foreground: 210 40% 98%;
+    --success-light: 142 76% 15%;
 
-    --warning: 60 100% 55%;             /* Terminal yellow */
-    --warning-foreground: 222 25% 8%;
-    --warning-light: 60 100% 15%;
+    --warning: 38 92% 50%;                 /* Orange */
+    --warning-foreground: 210 40% 98%;
+    --warning-light: 38 92% 15%;
 
-    --danger: 0 100% 60%;               /* Bright terminal red */
-    --danger-foreground: 222 25% 8%;
-    --danger-light: 0 100% 15%;
+    --danger: 0 84% 60%;                   /* Red */
+    --danger-foreground: 210 40% 98%;
+    --danger-light: 0 84% 15%;
 
-    /* Muted Colors - Terminal style */
-    --muted: 222 25% 18%;
-    --muted-foreground: 195 50% 65%;
+    /* Muted */
+    --muted: 222 47% 15%;
+    --muted-foreground: 215 20% 65%;
 
-    /* Accent Colors - Terminal highlights */
-    --accent: 280 100% 40%;             /* Purple accent */
-    --accent-foreground: 195 100% 85%;
+    /* Accent */
+    --accent: 222 47% 15%;
+    --accent-foreground: 210 40% 98%;
 
-    /* Border & Input - Terminal style */
-    --border: 200 50% 25%;
-    --input: 222 25% 15%;
-    --input-focus: 200 100% 60%;
-    --ring: 200 100% 60%;
+    /* Borders & Inputs */
+    --border: 222 47% 15%;
+    --input: 222 47% 13%;
+    --input-focus: 210 100% 60%;
+    --ring: 210 100% 60%;
 
-    /* Terminal Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-light)));
-    --gradient-terminal: linear-gradient(180deg, hsl(var(--background)), hsl(var(--background-secondary)));
-    --gradient-glow: linear-gradient(135deg, hsl(200 100% 60% / 0.3), hsl(180 100% 70% / 0.3));
+    /* Curve-style Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(210 100% 60%), hsl(200 100% 70%));
+    --gradient-card: linear-gradient(135deg, hsl(222 47% 11%), hsl(222 47% 13%));
+    --gradient-page: linear-gradient(135deg, hsl(222 47% 7%), hsl(222 47% 9%));
 
-    /* Terminal Shadows & Glows */
-    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.3);
-    --shadow: 0 4px 12px 0 rgb(0 0 0 / 0.5);
-    --shadow-lg: 0 8px 24px 0 rgb(0 0 0 / 0.7);
-    --shadow-primary: 0 4px 16px 0 hsl(var(--primary) / 0.4);
-    --shadow-glow: 0 0 20px hsl(var(--primary) / 0.3);
-    --shadow-terminal: inset 0 0 20px hsl(200 100% 60% / 0.1);
+    /* Clean Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow: 0 4px 12px 0 rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 10px 25px 0 rgb(0 0 0 / 0.5);
+    --shadow-primary: 0 4px 16px 0 hsl(210 100% 60% / 0.3);
+    --shadow-card: 0 8px 16px 0 rgb(0 0 0 / 0.3);
 
     /* Radius */
     --radius: 0.75rem;
@@ -138,10 +137,8 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'JetBrains Mono', 'Inter', monospace, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background-image: 
-      radial-gradient(circle at 25% 25%, hsl(200 100% 60% / 0.05) 0%, transparent 50%),
-      radial-gradient(circle at 75% 75%, hsl(180 100% 70% / 0.05) 0%, transparent 50%);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--gradient-page);
   }
 
   /* Custom animations */
@@ -174,83 +171,33 @@
 }
 
 @layer components {
-  /* OVFL Terminal Component System */
+  /* OVFL Curve-inspired Components */
   .ovfl-gradient {
     background: var(--gradient-primary);
   }
 
-  .ovfl-terminal-glow {
-    background: var(--gradient-glow);
-    box-shadow: var(--shadow-glow);
-  }
-
-  .ovfl-shadow {
-    box-shadow: var(--shadow);
-  }
-
-  .ovfl-shadow-lg {
-    box-shadow: var(--shadow-lg);
-  }
-
-  .ovfl-shadow-primary {
-    box-shadow: var(--shadow-primary);
-  }
-
   .ovfl-card {
     @apply bg-card border border-card-border rounded-lg;
-    box-shadow: var(--shadow-terminal), var(--shadow);
-    background: linear-gradient(135deg, hsl(var(--card)), hsl(222 25% 14%));
+    background: var(--gradient-card);
+    box-shadow: var(--shadow-card);
   }
 
   .ovfl-button-primary {
-    @apply bg-primary hover:bg-primary-hover text-primary-foreground px-6 py-3 rounded-lg font-mono font-semibold transition-all duration-200;
-    box-shadow: var(--shadow-glow), 0 0 0 1px hsl(var(--primary) / 0.3);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    @apply bg-primary hover:bg-primary-hover text-primary-foreground px-6 py-3 rounded-lg font-semibold transition-all duration-200;
+    box-shadow: var(--shadow-primary);
   }
 
   .ovfl-button-secondary {
-    @apply bg-secondary hover:bg-secondary-hover text-secondary-foreground px-6 py-3 rounded-lg font-mono font-semibold transition-all duration-200 border border-border;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    @apply bg-secondary hover:bg-secondary-hover text-secondary-foreground px-6 py-3 rounded-lg font-semibold transition-all duration-200 border border-border;
   }
 
   .ovfl-input {
-    @apply bg-input border border-border px-4 py-3 rounded-lg text-foreground placeholder:text-muted-foreground font-mono transition-all duration-200;
-    box-shadow: var(--shadow-terminal);
+    @apply bg-input border border-border px-4 py-3 rounded-lg text-foreground placeholder:text-muted-foreground transition-all duration-200;
+    box-shadow: var(--shadow-sm);
   }
 
   .ovfl-input:focus {
     @apply border-input-focus;
-    box-shadow: var(--shadow-terminal), 0 0 0 2px hsl(var(--primary) / 0.3);
-  }
-
-  /* Terminal text effects */
-  .terminal-text {
-    font-family: 'JetBrains Mono', monospace;
-    text-shadow: 0 0 10px currentColor;
-  }
-
-  .terminal-glow {
-    text-shadow: 
-      0 0 5px currentColor,
-      0 0 10px currentColor,
-      0 0 15px currentColor;
-  }
-
-  /* Retro scan lines effect */
-  .scan-lines::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(
-      transparent 50%,
-      hsl(200 100% 60% / 0.03) 50%
-    );
-    background-size: 100% 4px;
-    pointer-events: none;
+    box-shadow: var(--shadow-primary);
   }
 }

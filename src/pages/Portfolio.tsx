@@ -11,15 +11,15 @@ export default function Portfolio() {
 
   if (!isConnected) {
     return (
-      <div className="min-h-screen bg-background scan-lines relative">
+      <div className="min-h-screen bg-background">
         <div className="flex items-center justify-center min-h-[80vh] px-4">
-          <Card className="max-w-md w-full text-center ovfl-card">
+          <Card className="ovfl-card max-w-md w-full text-center">
             <CardHeader>
-              <div className="mx-auto w-16 h-16 bg-primary/20 rounded-lg flex items-center justify-center mb-4 ovfl-terminal-glow">
-                <TrendingUp className="w-8 h-8 text-primary terminal-glow" />
+              <div className="mx-auto w-16 h-16 bg-primary/20 rounded-lg flex items-center justify-center mb-4">
+                <TrendingUp className="w-8 h-8 text-primary" />
               </div>
-              <CardTitle className="text-2xl terminal-text">CONNECT_WALLET</CardTitle>
-              <CardDescription className="text-base font-mono">
+              <CardTitle className="text-2xl">Connect Your Wallet</CardTitle>
+              <CardDescription className="text-base">
                 Connect your wallet to view and manage your OVFL portfolio and active streams
               </CardDescription>
             </CardHeader>
@@ -33,13 +33,13 @@ export default function Portfolio() {
   }
 
   return (
-    <div className="min-h-screen bg-background scan-lines relative">
+    <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-primary mb-2 terminal-text terminal-glow">PORTFOLIO_DASHBOARD</h1>
-          <p className="text-xl text-muted-foreground font-mono">
-            &gt; Monitor and manage your OVFL positions and streaming yields
+          <h1 className="text-4xl font-bold text-primary mb-2">Portfolio Dashboard</h1>
+          <p className="text-xl text-muted-foreground">
+            Monitor and manage your OVFL positions and streaming yields
           </p>
         </div>
 
@@ -49,10 +49,10 @@ export default function Portfolio() {
         {/* Active Streams */}
         <div className="mt-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-primary terminal-text">&gt; ACTIVE_STREAMS</h2>
-            <div className="flex items-center gap-2 text-sm text-success font-mono">
-              <AlertCircle className="w-4 h-4 terminal-glow" />
-              [REAL_TIME_UPDATES]
+            <h2 className="text-2xl font-bold text-primary">Active Streams</h2>
+            <div className="flex items-center gap-2 text-sm text-success">
+              <AlertCircle className="w-4 h-4" />
+              Real-time updates
             </div>
           </div>
           <StreamsList />
