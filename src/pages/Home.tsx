@@ -1,151 +1,105 @@
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowRight, TrendingUp, Zap, Shield, DollarSign } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Link } from 'react-router-dom'
+import { MarketsTable } from '@/components/Markets/MarketsTable'
 
-const metrics = [
-  { label: 'Total Value Locked', value: '$12.4M', change: '+23.4%' },
-  { label: 'Active Markets', value: '8', change: '+2' },
-  { label: 'Total Streams', value: '1,247', change: '+156' },
-  { label: 'Average APY', value: '8.7%', change: '+1.2%' },
-]
-
-const steps = [
+const topMarkets = [
   {
-    icon: DollarSign,
-    title: 'Deposit Principal Tokens',
-    description: 'Select from approved Pendle PT markets and deposit your tokens'
+    id: '1',
+    name: 'weETH-PT-26DEC24',
+    underlying: 'weETH',
+    currentRate: 0.9156,
+    impliedAPY: 12.8,
+    tvl: 45200000,
+    volume24h: 2100000,
+    expiry: '2024-12-26',
+    daysToExpiry: 45,
+    status: 'active' as const
   },
   {
-    icon: Zap,
-    title: 'Get Instant Liquidity',
-    description: 'Receive ovflETH immediately representing your principal value'
+    id: '2',
+    name: 'ezETH-PT-28FEB25',
+    underlying: 'ezETH',
+    currentRate: 0.9234,
+    impliedAPY: 11.2,
+    tvl: 38700000,
+    volume24h: 1800000,
+    expiry: '2025-02-28',
+    daysToExpiry: 89,
+    status: 'active' as const
   },
   {
-    icon: TrendingUp,
-    title: 'Borrow/Sell Streaming Yield',
-    description: 'Enjoy continuous yield streaming via Sablier that you can borrow/sell until PT maturity'
+    id: '3',
+    name: 'rETH-PT-30MAR25',
+    underlying: 'rETH',
+    currentRate: 0.9087,
+    impliedAPY: 13.5,
+    tvl: 28900000,
+    volume24h: 950000,
+    expiry: '2025-03-30',
+    daysToExpiry: 119,
+    status: 'active' as const
   }
 ]
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative py-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        <div className="absolute inset-0 bg-primary/5" />
-        <div className="relative max-w-7xl mx-auto text-center">
-          <div className="animate-fade-in">
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-primary mb-6 leading-tight">
-              Trade Your
-              <span className="block ovfl-gradient bg-clip-text text-transparent">
-                PT Yield
-              </span>
+      <section className="relative py-16 px-4 sm:px-6 lg:px-8">
+        <div className="relative max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold text-primary mb-4">
+              Borrow Against Your Streaming Yield
             </h1>
-            <p className="text-xl sm:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
-              OVFL transforms Pendle Principal Tokens into instant liquidity 
-              plus streaming yield that you can sell/borrow against.
+            <p className="text-xl text-muted-foreground mb-8">
+              Deposit PT tokens, receive instant liquidity with ovflETH, keep streaming yield until maturity
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link to="/deposit">
-                <Button size="xl" variant="hero" className="w-full sm:w-auto">
-                  Start Earning
-                  <ArrowRight className="w-5 h-5" />
-                </Button>
-              </Link>
-              <Link to="/portfolio">
-                <Button size="xl" variant="outline" className="w-full sm:w-auto">
-                  View Portfolio
-                </Button>
-              </Link>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button asChild size="lg">
+                <Link to="/deposit">Deposit PT</Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link to="/portfolio">View Portfolio</Link>
+              </Button>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Metrics Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {metrics.map((metric, index) => (
-              <Card key={metric.label} className="animate-slide-in hover:scale-105 transition-transform duration-200" style={{ animationDelay: `${index * 0.1}s` }}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">{metric.label}</p>
-                      <p className="text-3xl font-bold text-primary">{metric.value}</p>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-sm font-medium text-success">{metric.change}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-background-secondary/50">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-primary mb-4">How OVFL Works</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Three simple steps to unlock the value of your Principal Tokens
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {steps.map((step, index) => {
-              const Icon = step.icon
-              return (
-                <Card key={index} className="ovfl-card text-center p-8 hover:shadow-lg transition-shadow duration-300">
-                  <CardHeader>
-                    <div className="mx-auto w-16 h-16 ovfl-gradient rounded-full flex items-center justify-center mb-4">
-                      <Icon className="w-8 h-8 text-white" />
-                    </div>
-                    <CardTitle className="text-xl">{step.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-base">
-                      {step.description}
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Call to Action Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-center">
-            <div className="w-full max-w-md">
-              <Card className="ovfl-card p-8">
-                <CardHeader>
-                  <CardTitle className="text-2xl">Ready to get started?</CardTitle>
-                  <CardDescription>
-                    Join thousands of users earning with OVFL
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Link to="/deposit">
-                    <Button size="lg" className="w-full">
-                      Start Depositing
-                      <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </Link>
-                  <Link to="/markets">
-                    <Button size="lg" variant="outline" className="w-full">
-                      Explore Markets
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
+          {/* Top Markets Table */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-primary">Top Markets</h2>
+              <Button asChild variant="outline">
+                <Link to="/markets">View All Markets</Link>
+              </Button>
             </div>
+            <MarketsTable markets={topMarkets} limit={3} />
+          </div>
+        </div>
+      </section>
+
+      {/* Summary Stats */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-muted/30">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total Value Locked</CardTitle>
+                <div className="text-2xl font-bold">$127.5M</div>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Active Streams</CardTitle>
+                <div className="text-2xl font-bold">3,247</div>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Average APY</CardTitle>
+                <div className="text-2xl font-bold text-success">12.4%</div>
+              </CardHeader>
+            </Card>
           </div>
         </div>
       </section>

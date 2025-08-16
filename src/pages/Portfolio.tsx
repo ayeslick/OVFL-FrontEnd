@@ -1,10 +1,11 @@
 import { useAccount } from 'wagmi'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { StreamsList } from '@/components/Portfolio/StreamsList'
-import { PortfolioStats } from '@/components/Portfolio/PortfolioStats'
+import { PositionsTable } from '@/components/Portfolio/PositionsTable'
 import { WalletConnect } from '@/components/Wallet/WalletConnect'
-import { TrendingUp, AlertCircle } from 'lucide-react'
+import { TrendingUp, Wallet } from 'lucide-react'
 
 export default function Portfolio() {
   const { isConnected } = useAccount()
@@ -43,20 +44,69 @@ export default function Portfolio() {
           </p>
         </div>
 
-        {/* Portfolio Stats */}
-        <PortfolioStats />
-
-        {/* Active Streams */}
-        <div className="mt-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-primary">Active Streams</h2>
-            <div className="flex items-center gap-2 text-sm text-success">
-              <AlertCircle className="w-4 h-4" />
-              Real-time updates
-            </div>
-          </div>
-          <StreamsList />
+        {/* Summary Bar */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">ovflETH Balance</CardTitle>
+              <div className="text-2xl font-bold">32.4567 ovflETH</div>
+            </CardHeader>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Claimable Now</CardTitle>
+              <div className="text-2xl font-bold text-success">2.1234 ETH</div>
+            </CardHeader>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Active Streams</CardTitle>
+              <div className="text-2xl font-bold">3</div>
+            </CardHeader>
+          </Card>
         </div>
+
+        {/* Portfolio Tabs */}
+        <Tabs defaultValue="positions" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3 max-w-md">
+            <TabsTrigger value="positions">Positions</TabsTrigger>
+            <TabsTrigger value="streams">Streams</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="positions" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-primary">Your Positions</h2>
+              <div className="text-sm text-muted-foreground">
+                3 active positions
+              </div>
+            </div>
+            <PositionsTable />
+          </TabsContent>
+
+          <TabsContent value="streams" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-primary">Active Streams</h2>
+              <Button>Claim All Available</Button>
+            </div>
+            <StreamsList />
+          </TabsContent>
+
+          <TabsContent value="history" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-primary">Transaction History</h2>
+            </div>
+            <Card>
+              <CardContent className="py-8">
+                <div className="text-center text-muted-foreground">
+                  Transaction history coming soon
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   )
