@@ -24,7 +24,7 @@ import {
   Code2
 } from "lucide-react";
 import { useAccount, useChainId, useBlockNumber } from "wagmi";
-import { tenderlyTestnet } from "@/config/wagmi";
+import { ovflTenderly } from "@/config/wagmi";
 
 interface DebugPanelProps {
   open: boolean;
@@ -37,7 +37,7 @@ export const DebugPanel = ({ open, onOpenChange }: DebugPanelProps) => {
   const { data: blockNumber } = useBlockNumber();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const isTestMode = chainId === tenderlyTestnet.id;
+  const isTestMode = chainId === ovflTenderly.id;
 
   // Mock contract state data
   const contractStates = [

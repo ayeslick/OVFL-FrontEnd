@@ -3,18 +3,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TestTube, ExternalLink, RotateCcw } from "lucide-react";
 import { useAccount, useChainId } from "wagmi";
-import { tenderlyTestnet } from "@/config/wagmi";
+import { ovflTenderly } from "@/config/wagmi";
 
 interface TestModeBannerProps {
-  onResetFork?: () => void;
   onOpenDebugPanel?: () => void;
 }
 
-export const TestModeBanner = ({ onResetFork, onOpenDebugPanel }: TestModeBannerProps) => {
+export const TestModeBanner = ({ onOpenDebugPanel }: TestModeBannerProps) => {
   const chainId = useChainId();
   const { isConnected } = useAccount();
   
-  const isTestMode = chainId === tenderlyTestnet.id;
+  const isTestMode = chainId === ovflTenderly.id;
   
   if (!isTestMode || !isConnected) return null;
 
@@ -24,10 +23,10 @@ export const TestModeBanner = ({ onResetFork, onOpenDebugPanel }: TestModeBanner
       <AlertDescription className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-warning font-medium">
-            Test Mode Active - Connected to Tenderly Virtual TestNet
+            Development Mode - Connected to OVFL Tenderly Network
           </span>
           <Badge variant="outline" className="border-warning text-warning">
-            Testnet
+            Chain {ovflTenderly.id}
           </Badge>
         </div>
         <div className="flex items-center gap-2">
@@ -39,15 +38,6 @@ export const TestModeBanner = ({ onResetFork, onOpenDebugPanel }: TestModeBanner
           >
             <ExternalLink className="w-4 h-4 mr-1" />
             Debug Panel
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onResetFork}
-            className="border-warning text-warning hover:bg-warning/20"
-          >
-            <RotateCcw className="w-4 h-4 mr-1" />
-            Reset Fork
           </Button>
         </div>
       </AlertDescription>

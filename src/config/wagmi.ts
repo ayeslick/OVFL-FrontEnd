@@ -1,11 +1,10 @@
 import { createConfig, http } from 'wagmi'
-import { mainnet } from 'wagmi/chains'
-import { coinbaseWallet, metaMask, walletConnect } from 'wagmi/connectors'
+import { coinbaseWallet, metaMask } from 'wagmi/connectors'
 
-// Tenderly Virtual TestNet configuration
-export const tenderlyTestnet = {
-  id: 88888,
-  name: 'Tenderly Virtual TestNet',
+// OVFL Tenderly Virtual Network - the only chain we support
+export const ovflTenderly = {
+  id: 17777,
+  name: 'OVFL Tenderly',
   nativeCurrency: {
     name: 'Ether',
     symbol: 'ETH',
@@ -13,32 +12,28 @@ export const tenderlyTestnet = {
   },
   rpcUrls: {
     default: {
-      http: ['https://virtual.mainnet.rpc.tenderly.co/YOUR_TENDERLY_ACCESS_KEY'],
+      http: ['https://virtual.mainnet.us-east.rpc.tenderly.co/be0dadf3-31fb-4b53-9d7a-084f93b2021a'],
     },
   },
   blockExplorers: {
     default: {
       name: 'Tenderly Explorer',
-      url: 'https://dashboard.tenderly.co/explorer/vnet/YOUR_VNET_ID',
+      url: 'https://dashboard.tenderly.co/explorer/vnet',
     },
   },
-  testnet: true,
+  testnet: false, // Treat as mainnet for user experience
 } as const
 
 export const wagmiConfig = createConfig({
-  chains: [mainnet, tenderlyTestnet],
+  chains: [ovflTenderly],
   connectors: [
     metaMask(),
     coinbaseWallet({
       appName: 'OVFL Protocol',
       appLogoUrl: 'https://ovfl.xyz/logo.png',
     }),
-    walletConnect({
-      projectId: 'your-project-id', // Replace with actual project ID
-    }),
   ],
   transports: {
-    [mainnet.id]: http(),
-    [tenderlyTestnet.id]: http(),
+    [ovflTenderly.id]: http(),
   },
 })

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Wallet, Coins, Zap, CheckCircle, AlertCircle } from "lucide-react";
 import { useAccount, useChainId } from "wagmi";
-import { tenderlyTestnet } from "@/config/wagmi";
+import { ovflTenderly } from "@/config/wagmi";
 import { useToast } from "@/hooks/use-toast";
 
 export const TestAccountFunding = () => {
@@ -20,7 +20,7 @@ export const TestAccountFunding = () => {
   const [tokenAmount, setTokenAmount] = useState("1000");
   const [selectedToken, setSelectedToken] = useState("USDC");
 
-  const isTestMode = chainId === tenderlyTestnet.id;
+  const isTestMode = chainId === ovflTenderly.id;
 
   const testTokens = [
     { symbol: "USDC", name: "USD Coin", decimals: 6 },

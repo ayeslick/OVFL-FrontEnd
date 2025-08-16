@@ -20,7 +20,7 @@ import {
   Play
 } from "lucide-react";
 import { useAccount, useChainId } from "wagmi";
-import { tenderlyTestnet } from "@/config/wagmi";
+import { ovflTenderly } from "@/config/wagmi";
 import { useToast } from "@/hooks/use-toast";
 
 const Testing = () => {
@@ -29,7 +29,7 @@ const Testing = () => {
   const { toast } = useToast();
   const [debugPanelOpen, setDebugPanelOpen] = useState(false);
 
-  const isTestMode = chainId === tenderlyTestnet.id;
+  const isTestMode = chainId === ovflTenderly.id;
 
   const handleResetFork = async () => {
     toast({
@@ -84,7 +84,6 @@ const Testing = () => {
 
         {/* Test Mode Banner */}
         <TestModeBanner 
-          onResetFork={handleResetFork}
           onOpenDebugPanel={() => setDebugPanelOpen(true)}
         />
 

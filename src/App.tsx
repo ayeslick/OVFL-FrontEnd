@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { WagmiProvider } from 'wagmi';
 import { wagmiConfig } from '@/config/wagmi';
 import { Navigation } from '@/components/Layout/Navigation';
+import { ProtectedRoute } from '@/components/Layout/ProtectedRoute';
 import Home from "./pages/Home";
 import Portfolio from "./pages/Portfolio";
 import Deposit from "./pages/Deposit";
@@ -25,10 +26,10 @@ const App = () => (
           <Navigation />
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/portfolio" element={<Portfolio />} />
-            <Route path="/deposit" element={<Deposit />} />
-            <Route path="/markets" element={<Markets />} />
-            <Route path="/testing" element={<Testing />} />
+            <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />
+            <Route path="/deposit" element={<ProtectedRoute><Deposit /></ProtectedRoute>} />
+            <Route path="/markets" element={<ProtectedRoute><Markets /></ProtectedRoute>} />
+            <Route path="/testing" element={<ProtectedRoute><Testing /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

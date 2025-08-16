@@ -18,8 +18,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
-import { mainnet } from "wagmi/chains";
-import { tenderlyTestnet } from "@/config/wagmi";
+import { ovflTenderly } from "@/config/wagmi";
 import { useToast } from "@/hooks/use-toast";
 
 export const NetworkSwitcher = () => {
@@ -30,20 +29,12 @@ export const NetworkSwitcher = () => {
 
   const networks = [
     {
-      id: mainnet.id,
-      name: "Ethereum Mainnet",
-      shortName: "Mainnet",
-      icon: Globe,
+      id: ovflTenderly.id,
+      name: "OVFL Tenderly",
+      shortName: "OVFL",
+      icon: Network,
       color: "text-primary",
       isTestnet: false,
-    },
-    {
-      id: tenderlyTestnet.id,
-      name: "Tenderly Virtual TestNet",
-      shortName: "Tenderly",
-      icon: TestTube,
-      color: "text-warning",
-      isTestnet: true,
     },
   ];
 

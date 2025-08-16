@@ -19,7 +19,7 @@ import {
   Code
 } from "lucide-react";
 import { useAccount, useChainId } from "wagmi";
-import { tenderlyTestnet } from "@/config/wagmi";
+import { ovflTenderly } from "@/config/wagmi";
 import { useToast } from "@/hooks/use-toast";
 
 interface SimulationResult {
@@ -50,7 +50,7 @@ export const TransactionSimulator = () => {
   const [gasPrice, setGasPrice] = useState("20");
   const [data, setData] = useState("");
 
-  const isTestMode = chainId === tenderlyTestnet.id;
+  const isTestMode = chainId === ovflTenderly.id;
 
   const simulateTransaction = async () => {
     if (!address || !isTestMode) return;
