@@ -43,9 +43,8 @@ export default function Home() {
               </span>
             </h1>
             <p className="text-xl sm:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
-              OVFL transforms Pendle Principal Tokens into instant liquidity plus streaming yield 
-              and sell/borrow against your streaming yield. 
-              Deposit PTs, get immediate ovflETH, and earn through maturity.
+              OVFL transforms Pendle Principal Tokens into instant liquidity 
+              plus streaming yield that you can sell/borrow against.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link to="/deposit">
