@@ -1,5 +1,6 @@
 // Pendle Backend API integration
-// API Documentation: https://api-docs-v2.pendle.finance/
+// API Documentation: https://api-v2.pendle.finance/core/docs
+// Hosted SDK: https://docs.pendle.finance/Developers/Backend/BackendAndHostedSDK
 
 const PENDLE_API_BASE = import.meta.env.VITE_PENDLE_API_BASE || 'https://api-v2.pendle.finance/core';
 const MARKET_ADDRESS = import.meta.env.VITE_PENDLE_MARKET_ADDRESS || '0xc374f7ec85f8c7de3207a10bb1978ba104bda3b2'; // PT-weETH-26DEC2024
@@ -47,26 +48,35 @@ export interface MarketData {
 }
 
 export async function fetchPendleMarket(): Promise<MarketData | null> {
+  // Updated endpoints based on official Pendle API documentation
+  // Using correct v1 and v2 paths with chainId parameter
   const endpoints = [
-    `${PENDLE_API_BASE}/v2/markets/${MARKET_ADDRESS}?chainId=${CHAIN_ID}`,
-    `${PENDLE_API_BASE}/markets/${MARKET_ADDRESS}?chainId=${CHAIN_ID}`,
-    `${PENDLE_API_BASE}/v2/markets?chainId=${CHAIN_ID}`,
-    `${PENDLE_API_BASE}/markets?chainId=${CHAIN_ID}`
+    `${PENDLE_API_BASE}/v2/${CHAIN_ID}/markets/${MARKET_ADDRESS}/data`, // Latest market data endpoint
+    `${PENDLE_API_BASE}/v1/${CHAIN_ID}/markets/active`, // Active markets list
+    `${PENDLE_API_BASE}/v1/${CHAIN_ID}/markets/inactive`, // Inactive markets list (fallback)
   ];
 
   for (let i = 0; i < endpoints.length; i++) {
     try {
-      const response = await fetch(endpoints[i]);
+      const response = await fetch(endpoints[i], {
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
       
       if (!response.ok) {
-        console.debug(`Endpoint ${i + 1} failed with status: ${response.status}`);
+        console.debug(`Pendle API endpoint ${i + 1} failed with status: ${response.status}`);
         continue;
       }
 
       const data = await response.json();
       
-      // For list endpoints (3rd and 4th), filter for our market
-      if (i >= 2) {
+      // For direct market data endpoint (1st)
+      if (i === 0) {
+        console.debug('Successfully fetched market data from direct endpoint:', data);
+        return convertToMarketData(data);
+      } else {
+        // For list endpoints, filter for our market
         const markets = Array.isArray(data) ? data : data.results || data.markets || [];
         const market = markets.find((m: any) => 
           m.address?.toLowerCase() === MARKET_ADDRESS.toLowerCase() ||
@@ -74,19 +84,15 @@ export async function fetchPendleMarket(): Promise<MarketData | null> {
         );
         
         if (!market) {
-          console.debug(`Market not found in list from endpoint ${i + 1}`);
+          console.debug(`Market ${MARKET_ADDRESS} not found in list from endpoint ${i + 1}`);
           continue;
         }
         
-        console.debug('Successfully fetched market data from list endpoint');
+        console.debug('Successfully fetched market data from list endpoint:', market);
         return convertToMarketData(market);
-      } else {
-        // Direct market endpoint
-        console.debug('Successfully fetched market data from direct endpoint');
-        return convertToMarketData(data);
       }
     } catch (error) {
-      console.debug(`Endpoint ${i + 1} error:`, error);
+      console.debug(`Pendle API endpoint ${i + 1} error:`, error);
       continue;
     }
   }
