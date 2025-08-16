@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -28,6 +29,7 @@ type SortField = 'impliedAPY' | 'tvl' | 'volume24h' | 'currentRate' | 'daysToExp
 type SortDirection = 'asc' | 'desc'
 
 export function MarketsTable({ markets, limit, showFilters = false }: MarketsTableProps) {
+  const navigate = useNavigate()
   const [sortField, setSortField] = useState<SortField>('impliedAPY')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
   const [tokenFilter, setTokenFilter] = useState<string>('all')
@@ -217,7 +219,11 @@ export function MarketsTable({ markets, limit, showFilters = false }: MarketsTab
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <Button size="sm" className="h-8">
+                    <Button 
+                      size="sm" 
+                      className="h-8"
+                      onClick={() => navigate(`/deposit?market=${encodeURIComponent(market.id)}`)}
+                    >
                       Deposit PT
                     </Button>
                     <Button 

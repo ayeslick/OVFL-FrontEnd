@@ -8,7 +8,6 @@ import { TestModeBanner } from "@/components/Testing/TestModeBanner";
 import { TestAccountFunding } from "@/components/Testing/TestAccountFunding";
 import { TransactionSimulator } from "@/components/Testing/TransactionSimulator";
 import { DebugPanel } from "@/components/Testing/DebugPanel";
-import { NetworkSwitcher } from "@/components/Testing/NetworkSwitcher";
 import { 
   TestTube, 
   Zap, 
@@ -71,7 +70,6 @@ const Testing = () => {
           </div>
           
           <div className="flex items-center gap-3">
-            <NetworkSwitcher />
             <Button
               variant="outline"
               onClick={openTenderlyDashboard}
@@ -104,11 +102,8 @@ const Testing = () => {
               <TestTube className="w-12 h-12 mx-auto mb-4 text-warning" />
               <h2 className="text-2xl font-semibold mb-2">Switch to Test Mode</h2>
               <p className="text-muted-foreground mb-6">
-                Switch to Tenderly Virtual TestNet to access all testing features
+                Please switch to OVFL Tenderly network in your wallet to access all testing features
               </p>
-              <div className="flex justify-center">
-                <NetworkSwitcher />
-              </div>
             </CardContent>
           </Card>
         ) : (

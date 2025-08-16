@@ -47,13 +47,16 @@ export interface MarketData {
   daysToExpiry: number;
 }
 
-export async function fetchPendleMarket(): Promise<MarketData | null> {
+export async function fetchPendleMarket(marketAddress?: string): Promise<MarketData | null> {
   try {
     console.debug('🔍 Fetching Pendle Market Data...');
     
+    // Use the provided market address or fall back to default
+    const targetMarket = marketAddress || MARKET_ADDRESS;
+    
     // Use v2 for data and v1 for metadata (like working Python script)
-    const marketDataUrl = `${PENDLE_API_BASE}/v2/${CHAIN_ID}/markets/${MARKET_ADDRESS}/data`;
-    const marketInfoUrl = `${PENDLE_API_BASE}/v1/${CHAIN_ID}/markets/${MARKET_ADDRESS}`;
+    const marketDataUrl = `${PENDLE_API_BASE}/v2/${CHAIN_ID}/markets/${targetMarket}/data`;
+    const marketInfoUrl = `${PENDLE_API_BASE}/v1/${CHAIN_ID}/markets/${targetMarket}`;
     
     console.debug('📡 API URLs:', { marketDataUrl, marketInfoUrl });
     
@@ -99,7 +102,7 @@ export async function fetchPendleMarket(): Promise<MarketData | null> {
       combinedKeys: Object.keys(combinedData)
     });
 
-    return convertToMarketData(combinedData);
+    return convertToMarketData(combinedData, marketAddress);
 
   } catch (error) {
     console.error('❌ Error fetching Pendle market data:', error);
@@ -107,7 +110,7 @@ export async function fetchPendleMarket(): Promise<MarketData | null> {
   }
 }
 
-function convertToMarketData(market: any): MarketData | null {
+function convertToMarketData(market: any, marketAddress?: string): MarketData | null {
   try {
     // Handle expiry from multiple possible sources (like Python script)
     const expiryTimestamp = market.expiry || market.maturity || market.expiryTimestamp;
@@ -154,7 +157,7 @@ function convertToMarketData(market: any): MarketData | null {
                 'PT weETH 26DEC2024';
 
     const marketData = {
-      id: market.address || MARKET_ADDRESS,
+      id: market.address || marketAddress || MARKET_ADDRESS,
       name,
       underlying,
       expiry,

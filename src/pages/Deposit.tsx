@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAccount } from 'wagmi'
+import { useLocation } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,6 +13,7 @@ import { fetchPendleMarket, type MarketData } from '@/lib/pendle'
 export default function Deposit() {
   const { isConnected } = useAccount()
   const { toast } = useToast()
+  const location = useLocation()
   const [selectedMarket, setSelectedMarket] = useState('')
   const [depositAmount, setDepositAmount] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -22,10 +24,22 @@ export default function Deposit() {
     const loadMarketData = async () => {
       try {
         setIsLoadingMarket(true)
-        const market = await fetchPendleMarket()
+        
+        // Read query parameters
+        const searchParams = new URLSearchParams(location.search)
+        const marketParam = searchParams.get('market')
+        const amountParam = searchParams.get('amount')
+        
+        // Fetch market data with specific market if provided
+        const market = await fetchPendleMarket(marketParam || undefined)
         if (market) {
           setMarketData(market)
           setSelectedMarket(market.id)
+        }
+        
+        // Set amount if provided in query params
+        if (amountParam && !isNaN(Number(amountParam))) {
+          setDepositAmount(amountParam)
         }
       } catch (error) {
         console.error('Failed to load market data:', error)
@@ -34,7 +48,7 @@ export default function Deposit() {
       }
     }
     loadMarketData()
-  }, [])
+  }, [location.search])
 
   const calculatePreview = () => {
     if (!marketData || !depositAmount || isNaN(Number(depositAmount))) {
