@@ -51,9 +51,11 @@ export async function fetchPendleMarket(): Promise<MarketData | null> {
   try {
     console.debug('🔍 Fetching Pendle Market Data...');
     
-    // Fetch both market data and market info in parallel (like Python script)
+    // Use v2 for data and v1 for metadata (like working Python script)
     const marketDataUrl = `${PENDLE_API_BASE}/v2/${CHAIN_ID}/markets/${MARKET_ADDRESS}/data`;
-    const marketInfoUrl = `${PENDLE_API_BASE}/v2/${CHAIN_ID}/markets/${MARKET_ADDRESS}`;
+    const marketInfoUrl = `${PENDLE_API_BASE}/v1/${CHAIN_ID}/markets/${MARKET_ADDRESS}`;
+    
+    console.debug('📡 API URLs:', { marketDataUrl, marketInfoUrl });
     
     const [marketDataResponse, marketInfoResponse] = await Promise.allSettled([
       fetch(marketDataUrl, {
