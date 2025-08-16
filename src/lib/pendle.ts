@@ -116,18 +116,33 @@ function convertToMarketData(market: any): MarketData | null {
       status = 'expiring';
     }
 
-    return {
+    // Correctly derive currentRate from ptDiscount (1 - discount)
+    const ptDiscount = market.ptDiscount || 0;
+    const currentRate = Math.max(0, Math.min(1, 1 - ptDiscount));
+
+    const marketData = {
       id: market.address || MARKET_ADDRESS,
       name: market.name || market.symbol || 'PT weETH 26DEC2024',
       underlying: market.underlyingAsset?.symbol || market.underlying?.symbol || 'weETH',
       expiry,
-      currentRate: market.assetPriceUsd || market.pt?.price || market.price || 0,
+      currentRate,
       impliedAPY: (market.impliedApy || market.apy || 0) * 100, // Convert to percentage
       tvl: market.liquidity?.usd || market.tvl || 0,
       volume24h: market.tradingVolume?.usd || market.volume?.usd24h || market.volume24h || 0,
       status,
       daysToExpiry,
     };
+
+    // Debug log for verification
+    console.debug('Converted market data:', {
+      currentRate: marketData.currentRate,
+      impliedAPY: marketData.impliedAPY,
+      tvl: marketData.tvl,
+      volume24h: marketData.volume24h,
+      ptDiscount: ptDiscount
+    });
+
+    return marketData;
   } catch (error) {
     console.error('Failed to convert market data:', error);
     return null;

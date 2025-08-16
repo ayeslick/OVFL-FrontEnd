@@ -220,7 +220,12 @@ export function MarketsTable({ markets, limit, showFilters = false }: MarketsTab
                     <Button size="sm" className="h-8">
                       Deposit PT
                     </Button>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 w-8 p-0"
+                      onClick={() => window.open(`https://app.pendle.finance/trade/markets/${market.id}/swap?view=pt&chain=ethereum`, '_blank')}
+                    >
                       <ExternalLink className="w-4 h-4" />
                     </Button>
                   </div>
