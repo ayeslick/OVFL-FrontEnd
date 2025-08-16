@@ -40,46 +40,39 @@ const mockMarkets = [
 
 export default function Deposit() {
   const { isConnected } = useAccount()
-  // Simulate connected wallet for demo
   const isConnectedDemo = true
   const displayConnected = isConnectedDemo || isConnected
   const { toast } = useToast()
   const [selectedMarket, setSelectedMarket] = useState('')
-  const [amount, setAmount] = useState('')
+  const [depositAmount, setDepositAmount] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
   const selectedMarketData = mockMarkets.find(m => m.id === selectedMarket)
 
   const calculatePreview = () => {
-    if (!selectedMarketData || !amount || isNaN(Number(amount))) {
+    if (!selectedMarketData || !depositAmount || isNaN(Number(depositAmount))) {
       return {
-        ovflETH: '0',
-        streamAmount: '0',
-        streamDuration: '0',
-        fee: '0'
+        instantLiquidity: 0,
+        streamingYield: 0,
+        fee: 0
       }
     }
 
-    const amountNum = Number(amount)
+    const amount = Number(depositAmount)
     const rate = Number(selectedMarketData.currentRate)
-    const ovflETH = (amountNum * rate * 0.95).toFixed(6) // 5% goes to streaming
-    const streamAmount = (amountNum * rate * 0.05).toFixed(6)
-    const fee = (amountNum * 0.005).toFixed(6) // 0.5% fee
-    
-    const expiryDate = new Date(selectedMarketData.expiry)
-    const now = new Date()
-    const streamDuration = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    const instantLiquidity = amount * rate * 0.95 // 95% instant liquidity
+    const streamingYield = amount * rate * 0.05 // 5% streaming yield
+    const fee = amount * 0.005 // 0.5% fee
 
     return {
-      ovflETH,
-      streamAmount,
-      streamDuration: streamDuration.toString(),
+      instantLiquidity,
+      streamingYield,
       fee
     }
   }
 
   const handleDeposit = async () => {
-    if (!selectedMarketData || !amount) {
+    if (!selectedMarketData || !depositAmount) {
       toast({
         title: 'Invalid Input',
         description: 'Please select a market and enter an amount',
@@ -96,11 +89,11 @@ export default function Deposit() {
       
       toast({
         title: 'Deposit Successful!',
-        description: `Deposited ${amount} ${selectedMarketData.token} successfully`,
+        description: `Deposited ${depositAmount} ${selectedMarketData.token} successfully`,
       })
       
       // Reset form
-      setAmount('')
+      setDepositAmount('')
       setSelectedMarket('')
       
     } catch (error) {
@@ -140,7 +133,7 @@ export default function Deposit() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-background-secondary">
+    <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8 text-center">
@@ -152,7 +145,7 @@ export default function Deposit() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Deposit Form */}
-          <Card className="ovfl-shadow-lg">
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <PiggyBank className="w-5 h-5" />
@@ -185,22 +178,22 @@ export default function Deposit() {
 
               {/* Market Info */}
               {selectedMarketData && (
-                <div className="p-4 bg-muted rounded-lg space-y-2">
+                <div className="p-4 bg-muted/50 rounded-lg space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Current Rate</span>
-                    <span className="text-sm font-medium">{selectedMarketData.currentRate} ETH</span>
+                    <span className="text-sm font-mono">{selectedMarketData.currentRate} ETH</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">APY</span>
-                    <span className="text-sm font-medium text-success">{selectedMarketData.apy}</span>
+                    <span className="text-sm font-mono text-success">{selectedMarketData.apy}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Expiry</span>
-                    <span className="text-sm font-medium">{selectedMarketData.expiry}</span>
+                    <span className="text-sm font-mono">{selectedMarketData.expiry}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">TVL</span>
-                    <span className="text-sm font-medium">{selectedMarketData.tvl}</span>
+                    <span className="text-sm font-mono">{selectedMarketData.tvl}</span>
                   </div>
                 </div>
               )}
@@ -211,11 +204,16 @@ export default function Deposit() {
                 <Input
                   type="number"
                   placeholder="0.0"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  value={depositAmount}
+                  onChange={(e) => setDepositAmount(e.target.value)}
                   step="0.000001"
                   min="0"
                 />
+                {selectedMarketData && depositAmount && (
+                  <div className="text-sm text-muted-foreground">
+                    Price: {selectedMarketData.currentRate} PT/ETH • Discount: {((1 - Number(selectedMarketData.currentRate)) * 100).toFixed(2)}%
+                  </div>
+                )}
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Balance: 10.5 {selectedMarketData?.token || 'PT'}</span>
                   <button className="text-primary hover:underline">Max</button>
@@ -225,7 +223,7 @@ export default function Deposit() {
               {/* Submit Button */}
               <Button 
                 onClick={handleDeposit}
-                disabled={!selectedMarket || !amount || isLoading}
+                disabled={!selectedMarket || !depositAmount || isLoading}
                 className="w-full"
                 size="lg"
               >
@@ -235,69 +233,47 @@ export default function Deposit() {
             </CardContent>
           </Card>
 
-          {/* Preview */}
-          <Card className="ovfl-shadow-lg">
+          {/* Transaction Preview */}
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" />
-                Transaction Preview
-              </CardTitle>
-              <CardDescription>
-                Preview what you'll receive from this deposit
-              </CardDescription>
+              <CardTitle className="text-xl">Transaction Preview</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Instant Liquidity */}
-              <div className="p-4 bg-success-light rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 bg-success rounded-full"></div>
-                  <span className="text-sm font-medium text-success">Instant Liquidity</span>
-                </div>
-                <div className="text-2xl font-bold text-success">
-                  {preview.ovflETH} ovflETH
-                </div>
-                <p className="text-xs text-success/80 mt-1">
-                  Received immediately upon deposit
-                </p>
-              </div>
-
-              {/* Streaming Yield */}
-              <div className="p-4 bg-primary/5 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <span className="text-sm font-medium text-primary">Streaming Yield</span>
-                </div>
-                <div className="text-2xl font-bold text-primary">
-                  {preview.streamAmount} {selectedMarketData?.token || 'PT'}
-                </div>
-                <p className="text-xs text-primary/80 mt-1">
-                  Streamed over {preview.streamDuration} days until maturity
-                </p>
-              </div>
-
-              {/* Fee Breakdown */}
-              <div className="space-y-3">
-                <h4 className="font-medium">Fee Breakdown</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Protocol Fee (0.5%)</span>
-                    <span>{preview.fee} {selectedMarketData?.token || 'PT'}</span>
+            <CardContent className="space-y-4">
+              {selectedMarketData && depositAmount ? (
+                <>
+                  {/* Price Info */}
+                  <div className="text-sm text-muted-foreground mb-4">
+                    Price: {selectedMarketData.currentRate} PT/ETH • Discount: {((1 - Number(selectedMarketData.currentRate)) * 100).toFixed(2)}%
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Gas Fee</span>
-                    <span>~$3.50</span>
+                  
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">You deposit</span>
+                      <span className="font-mono">{depositAmount} PT</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">You receive now (ovflETH)</span>
+                      <span className="font-mono text-success">{preview.instantLiquidity.toFixed(4)} ovflETH</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">You stream (PT)</span>
+                      <span className="font-mono text-success">{preview.streamingYield.toFixed(4)} ETH</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Fee</span>
+                      <span className="font-mono">{preview.fee.toFixed(4)} ETH</span>
+                    </div>
+                    <div className="flex justify-between pt-2 border-t">
+                      <span className="text-muted-foreground">Stream ends in</span>
+                      <span className="font-mono">{Math.floor((new Date(selectedMarketData.expiry).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days</span>
+                    </div>
                   </div>
+                </>
+              ) : (
+                <div className="text-center text-muted-foreground py-8">
+                  Select a market and enter an amount to see preview
                 </div>
-              </div>
-
-              {/* Warning */}
-              <div className="flex items-start gap-2 p-3 bg-warning-light rounded-lg">
-                <AlertCircle className="w-4 h-4 text-warning mt-0.5 flex-shrink-0" />
-                <div className="text-xs text-warning">
-                  <p className="font-medium">Important:</p>
-                  <p>Once deposited, your tokens will be locked until the stream completes.</p>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>
