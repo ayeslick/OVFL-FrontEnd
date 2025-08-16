@@ -1,0 +1,309 @@
+import { useState } from 'react'
+import { useAccount } from 'wagmi'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { WalletConnect } from '@/components/Wallet/WalletConnect'
+import { useToast } from '@/hooks/use-toast'
+import { PiggyBank, ArrowRight, AlertCircle, TrendingUp } from 'lucide-react'
+
+const mockMarkets = [
+  {
+    id: '1',
+    name: 'PT-weETH-26DEC2024',
+    token: 'PT-weETH',
+    expiry: '2024-12-26',
+    currentRate: '0.9234',
+    apy: '8.7%',
+    tvl: '$2.4M'
+  },
+  {
+    id: '2', 
+    name: 'PT-ezETH-27MAR2025',
+    token: 'PT-ezETH',
+    expiry: '2025-03-27',
+    currentRate: '0.9156',
+    apy: '9.2%',
+    tvl: '$1.8M'
+  },
+  {
+    id: '3',
+    name: 'PT-rETH-28JUN2025',
+    token: 'PT-rETH', 
+    expiry: '2025-06-28',
+    currentRate: '0.9078',
+    apy: '10.1%',
+    tvl: '$3.1M'
+  }
+]
+
+export default function Deposit() {
+  const { isConnected } = useAccount()
+  const { toast } = useToast()
+  const [selectedMarket, setSelectedMarket] = useState('')
+  const [amount, setAmount] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+
+  const selectedMarketData = mockMarkets.find(m => m.id === selectedMarket)
+
+  const calculatePreview = () => {
+    if (!selectedMarketData || !amount || isNaN(Number(amount))) {
+      return {
+        ovflETH: '0',
+        streamAmount: '0',
+        streamDuration: '0',
+        fee: '0'
+      }
+    }
+
+    const amountNum = Number(amount)
+    const rate = Number(selectedMarketData.currentRate)
+    const ovflETH = (amountNum * rate * 0.95).toFixed(6) // 5% goes to streaming
+    const streamAmount = (amountNum * rate * 0.05).toFixed(6)
+    const fee = (amountNum * 0.005).toFixed(6) // 0.5% fee
+    
+    const expiryDate = new Date(selectedMarketData.expiry)
+    const now = new Date()
+    const streamDuration = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+
+    return {
+      ovflETH,
+      streamAmount,
+      streamDuration: streamDuration.toString(),
+      fee
+    }
+  }
+
+  const handleDeposit = async () => {
+    if (!selectedMarketData || !amount) {
+      toast({
+        title: 'Invalid Input',
+        description: 'Please select a market and enter an amount',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      
+      // Simulate transaction
+      await new Promise(resolve => setTimeout(resolve, 3000))
+      
+      toast({
+        title: 'Deposit Successful!',
+        description: `Deposited ${amount} ${selectedMarketData.token} successfully`,
+      })
+      
+      // Reset form
+      setAmount('')
+      setSelectedMarket('')
+      
+    } catch (error) {
+      toast({
+        title: 'Deposit Failed',
+        description: 'Transaction failed. Please try again.',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const preview = calculatePreview()
+
+  if (!isConnected) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-background-secondary">
+        <div className="flex items-center justify-center min-h-[80vh] px-4">
+          <Card className="max-w-md w-full text-center ovfl-shadow-lg">
+            <CardHeader>
+              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <PiggyBank className="w-8 h-8 text-primary" />
+              </div>
+              <CardTitle className="text-2xl">Connect Your Wallet</CardTitle>
+              <CardDescription className="text-base">
+                Connect your wallet to start depositing Principal Tokens and earning yield
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <WalletConnect />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background to-background-secondary">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-bold text-primary mb-2">Deposit Principal Tokens</h1>
+          <p className="text-xl text-muted-foreground">
+            Convert your PTs into instant liquidity plus streaming yield
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Deposit Form */}
+          <Card className="ovfl-shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PiggyBank className="w-5 h-5" />
+                Deposit Form
+              </CardTitle>
+              <CardDescription>
+                Select a market and enter the amount you want to deposit
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Market Selection */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Select Market</label>
+                <Select value={selectedMarket} onValueChange={setSelectedMarket}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a Principal Token market" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {mockMarkets.map((market) => (
+                      <SelectItem key={market.id} value={market.id}>
+                        <div className="flex items-center justify-between w-full">
+                          <span>{market.name}</span>
+                          <span className="text-success ml-2">{market.apy}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Market Info */}
+              {selectedMarketData && (
+                <div className="p-4 bg-muted rounded-lg space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Current Rate</span>
+                    <span className="text-sm font-medium">{selectedMarketData.currentRate} ETH</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">APY</span>
+                    <span className="text-sm font-medium text-success">{selectedMarketData.apy}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Expiry</span>
+                    <span className="text-sm font-medium">{selectedMarketData.expiry}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">TVL</span>
+                    <span className="text-sm font-medium">{selectedMarketData.tvl}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Amount Input */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Amount</label>
+                <div className="relative">
+                  <Input
+                    type="number"
+                    placeholder="0.0"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    step="0.000001"
+                    min="0"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                    {selectedMarketData?.token || 'PT'}
+                  </div>
+                </div>
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Balance: 10.5 {selectedMarketData?.token || 'PT'}</span>
+                  <button className="text-primary hover:underline">Max</button>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <Button 
+                onClick={handleDeposit}
+                disabled={!selectedMarket || !amount || isLoading}
+                className="w-full"
+                size="lg"
+              >
+                {isLoading ? 'Processing...' : 'Deposit Principal Tokens'}
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Preview */}
+          <Card className="ovfl-shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5" />
+                Transaction Preview
+              </CardTitle>
+              <CardDescription>
+                Preview what you'll receive from this deposit
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Instant Liquidity */}
+              <div className="p-4 bg-success-light rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 bg-success rounded-full"></div>
+                  <span className="text-sm font-medium text-success">Instant Liquidity</span>
+                </div>
+                <div className="text-2xl font-bold text-success">
+                  {preview.ovflETH} ovflETH
+                </div>
+                <p className="text-xs text-success/80 mt-1">
+                  Received immediately upon deposit
+                </p>
+              </div>
+
+              {/* Streaming Yield */}
+              <div className="p-4 bg-primary/5 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  <span className="text-sm font-medium text-primary">Streaming Yield</span>
+                </div>
+                <div className="text-2xl font-bold text-primary">
+                  {preview.streamAmount} {selectedMarketData?.token || 'PT'}
+                </div>
+                <p className="text-xs text-primary/80 mt-1">
+                  Streamed over {preview.streamDuration} days until maturity
+                </p>
+              </div>
+
+              {/* Fee Breakdown */}
+              <div className="space-y-3">
+                <h4 className="font-medium">Fee Breakdown</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Protocol Fee (0.5%)</span>
+                    <span>{preview.fee} {selectedMarketData?.token || 'PT'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Gas Fee</span>
+                    <span>~$3.50</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Warning */}
+              <div className="flex items-start gap-2 p-3 bg-warning-light rounded-lg">
+                <AlertCircle className="w-4 h-4 text-warning mt-0.5 flex-shrink-0" />
+                <div className="text-xs text-warning">
+                  <p className="font-medium">Important:</p>
+                  <p>Once deposited, your tokens will be locked until the stream completes. You can withdraw accrued amounts but cannot recover the principal until maturity.</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  )
+}
