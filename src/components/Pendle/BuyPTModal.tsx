@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useAccount, useReadContract, useWriteContract, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi'
 import { parseUnits, formatUnits } from 'viem'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -87,19 +87,47 @@ export function BuyPTModal({
     }
   }
 
+  // Safe parsing for amount
+  const parsedAmount = useMemo(() => {
+    if (!decimals || !amount) return undefined
+    
+    // Validate input format: numbers with optional decimal
+    const validFormat = /^[0-9]+(\.[0-9]+)?$/.test(amount)
+    if (!validFormat) return undefined
+    
+    const num = Number(amount)
+    if (num <= 0) return undefined
+    
+    // Check decimal places don't exceed token decimals
+    const decimalPlaces = amount.includes('.') ? amount.split('.')[1].length : 0
+    if (decimalPlaces > Number(decimals)) return undefined
+    
+    try {
+      return parseUnits(amount, Number(decimals))
+    } catch {
+      return undefined
+    }
+  }, [amount, decimals])
+
   const handleApprove = async () => {
-    if (!amount || !address || !decimals) return
+    if (!parsedAmount || !address) {
+      toast({
+        title: 'Invalid amount',
+        description: 'Please enter a valid amount',
+        variant: 'destructive',
+      })
+      return
+    }
 
     setIsApproving(true)
     try {
-      const amountBigInt = parseUnits(amount, Number(decimals))
-      console.log('[BUYPT] Approval starting:', { underlyingTokenAddress, amount, amountBigInt: amountBigInt.toString() })
+      console.log('[BUYPT] Approval starting:', { underlyingTokenAddress, amount, amountBigInt: parsedAmount.toString() })
       
       await writeContract({
         address: underlyingTokenAddress as `0x${string}`,
         abi: ERC20_ABI,
         functionName: 'approve',
-        args: [PENDLE_ROUTER_V3, amountBigInt],
+        args: [PENDLE_ROUTER_V3, parsedAmount],
         chain: ovflTenderly,
         account: address,
       })
@@ -119,17 +147,23 @@ export function BuyPTModal({
   }
 
   const handleBuy = async () => {
-    if (!amount || !address || !decimals) return
+    if (!parsedAmount || !address) {
+      toast({
+        title: 'Invalid amount',
+        description: 'Please enter a valid amount',
+        variant: 'destructive',
+      })
+      return
+    }
 
     setIsBuying(true)
     try {
-      const amountBigInt = parseUnits(amount, Number(decimals))
-      console.log('[BUYPT] Buy starting:', { marketAddress, underlyingTokenAddress, amount, amountBigInt: amountBigInt.toString() })
+      console.log('[BUYPT] Buy starting:', { marketAddress, underlyingTokenAddress, amount, amountBigInt: parsedAmount.toString() })
       
       const quote = await fetchPendleQuote({
         marketAddress,
         tokenIn: underlyingTokenAddress,
-        amountIn: amountBigInt.toString(),
+        amountIn: parsedAmount.toString(),
         slippageBps: 100, // 1% slippage
         receiver: address,
       })
@@ -188,9 +222,9 @@ export function BuyPTModal({
     }
   }, [isConfirmed, txHash, amount, symbol, onPurchased, onOpenChange, toast])
 
-  const amountBigInt = amount && decimals ? parseUnits(amount, Number(decimals)) : 0n
-  const isApprovalNeeded = allowance !== undefined && amountBigInt > (allowance as bigint)
-  const hasBalance = balance && amountBigInt <= (balance as bigint)
+  const amountBigInt = parsedAmount ?? 0n
+  const isApprovalNeeded = allowance !== undefined && parsedAmount !== undefined && parsedAmount > (allowance as bigint)
+  const hasBalance = balance && parsedAmount !== undefined && parsedAmount <= (balance as bigint)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -235,10 +269,12 @@ export function BuyPTModal({
             
             <Button
               onClick={handleBuy}
-              disabled={isBuying || isConfirming || !hasBalance || isApprovalNeeded || !amount || allowance === undefined}
+              disabled={isBuying || isConfirming || !hasBalance || isApprovalNeeded || !amount || parsedAmount === undefined || allowance === undefined}
               className="w-full"
             >
-              {allowance === undefined ? 'Loading allowance...' : (isBuying || isConfirming ? 'Processing...' : 'Buy PT')}
+              {allowance === undefined ? 'Loading allowance...' : 
+               parsedAmount === undefined && amount ? 'Enter a valid amount' :
+               (isBuying || isConfirming ? 'Processing...' : 'Buy PT')}
             </Button>
           </div>
         </div>

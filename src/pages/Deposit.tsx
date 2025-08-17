@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { useLocation } from 'react-router-dom'
 import { formatEther, parseEther, parseUnits, formatUnits } from 'viem'
@@ -119,17 +119,39 @@ export default function Deposit() {
     functionName: 'BASIS_POINTS',
   })
 
+  // Safe parsing for deposit amount
+  const parsedDepositAmount = useMemo(() => {
+    if (!ptDecimals || !depositAmount) return undefined
+    
+    // Validate input format: numbers with optional decimal
+    const validFormat = /^[0-9]+(\.[0-9]+)?$/.test(depositAmount)
+    if (!validFormat) return undefined
+    
+    const num = Number(depositAmount)
+    if (num <= 0) return undefined
+    
+    // Check decimal places don't exceed token decimals
+    const decimalPlaces = depositAmount.includes('.') ? depositAmount.split('.')[1].length : 0
+    if (decimalPlaces > Number(ptDecimals)) return undefined
+    
+    try {
+      return parseUnits(depositAmount, Number(ptDecimals))
+    } catch {
+      return undefined
+    }
+  }, [depositAmount, ptDecimals])
+
   // Read OVFL preview  
   const { data: previewData } = useReadContract({
     address: OVFL_ADDRESS,
     abi: OVFL_ABI,
     functionName: 'previewStream',
-    args: marketData?.id && depositAmount && ptDecimals ? [
+    args: marketData?.id && parsedDepositAmount !== undefined ? [
       marketData.id as `0x${string}`, 
-      parseUnits(depositAmount || '0', Number(ptDecimals))
+      parsedDepositAmount
     ] : undefined,
     query: {
-      enabled: !!marketData?.id && !!depositAmount && !isNaN(Number(depositAmount)) && Number(depositAmount) > 0 && !!ptDecimals,
+      enabled: Boolean(marketData?.id && parsedDepositAmount !== undefined),
     },
   })
 
@@ -191,19 +213,17 @@ export default function Deposit() {
   }
 
   const handleApprovePT = async () => {
-    if (!marketData?.ptAddress || !depositAmount || !ptDecimals) return
+    if (!marketData?.ptAddress || !parsedDepositAmount) return
 
     try {
       setIsLoading(true)
-      const decimals = Number(ptDecimals)
-      const amount = parseUnits(depositAmount, decimals)
-      console.log('[DEPOSIT] PT Approval starting:', { ptAddress: marketData.ptAddress, depositAmount, amount: amount.toString() })
+      console.log('[DEPOSIT] PT Approval starting:', { ptAddress: marketData.ptAddress, depositAmount, amount: parsedDepositAmount.toString() })
       
       await writeContract({
         address: marketData.ptAddress as `0x${string}`,
         abi: ERC20_ABI,
         functionName: 'approve',
-        args: [OVFL_ADDRESS, amount],
+        args: [OVFL_ADDRESS, parsedDepositAmount],
         chain: ovflTenderly,
         account: address!,
       })
@@ -257,21 +277,18 @@ export default function Deposit() {
   }
 
   const handleDeposit = async () => {
-    if (!marketData || !depositAmount || !ptDecimals) {
+    if (!marketData || !parsedDepositAmount) {
       toast({
         title: 'Invalid Input',
-        description: 'Please select a market and enter an amount',
+        description: 'Please select a market and enter a valid amount',
         variant: 'destructive'
       })
       return
     }
 
-    const decimals = Number(ptDecimals)
-    const amount = parseUnits(depositAmount, decimals)
-
     // Validate minimum amount
-    if (minPtAmount && amount < (minPtAmount as bigint)) {
-      const minFormatted = formatUnits(minPtAmount as bigint, decimals)
+    if (minPtAmount && parsedDepositAmount < (minPtAmount as bigint)) {
+      const minFormatted = formatUnits(minPtAmount as bigint, Number(ptDecimals))
       toast({
         title: 'Amount Too Small',
         description: `Minimum deposit is ${minFormatted} PT`,
@@ -292,13 +309,13 @@ export default function Deposit() {
 
     try {
       setIsLoading(true)
-      console.log('[DEPOSIT] Deposit starting:', { marketId: marketData.id, amount: amount.toString() })
+      console.log('[DEPOSIT] Deposit starting:', { marketId: marketData.id, amount: parsedDepositAmount.toString() })
       
       await writeContract({
         address: OVFL_ADDRESS,
         abi: OVFL_ABI,
         functionName: 'deposit',
-        args: [marketData.id as `0x${string}`, amount],
+        args: [marketData.id as `0x${string}`, parsedDepositAmount],
         chain: ovflTenderly,
         account: address!,
       })
@@ -345,11 +362,7 @@ export default function Deposit() {
     return (toUser * feeBpsBn) / basisBn
   })() : 0n
 
-  const isPTApprovalNeeded = Boolean(allowance !== undefined && depositAmount && ptDecimals && (() => {
-    const decimals = Number(ptDecimals)
-    const amount = parseUnits(depositAmount, decimals)
-    return amount > (allowance as bigint)
-  })())
+  const isPTApprovalNeeded = Boolean(allowance !== undefined && parsedDepositAmount !== undefined && parsedDepositAmount > (allowance as bigint))
 
   const isWstETHApprovalNeeded = Boolean(wstETHAllowance !== undefined && wstETHAllowance === 0n)
   
@@ -359,6 +372,7 @@ export default function Deposit() {
   const getButtonDisabledReason = () => {
     if (!marketData) return 'Loading market data...'
     if (!depositAmount) return 'Enter deposit amount'
+    if (depositAmount && parsedDepositAmount === undefined) return 'Enter a valid amount'
     if (hasZeroPTBalance) return 'No PT balance'
     if (hasInsufficientWstETH) return 'Insufficient wstETH for fee'
     if (!marketApproval?.[0]) return 'Market not approved by OVFL'
