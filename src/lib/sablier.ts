@@ -20,6 +20,7 @@ export interface StreamInfo {
   endTime: number;
   withdrawnAmount: bigint;
   withdrawableAmount: bigint;
+  remainingAmount: bigint;
   isActive: boolean;
   isCancelable: boolean;
   isDepleted: boolean;
@@ -245,25 +246,46 @@ export async function getUserStreams(userAddress: Address): Promise<StreamInfo[]
           }),
         ]);
 
-        const nowSec = Math.floor(Date.now() / 1000)
-        const startSec = Number(streamData.startTime)
-        const endSec = Number(streamData.endTime)
-        const isFullyWithdrawn = BigInt(streamData.amounts.withdrawn) >= BigInt(streamData.amounts.deposited)
-        const isActive = !streamData.isDepleted && !isFullyWithdrawn && startSec <= nowSec && nowSec < endSec
+        const deposited = BigInt(streamData.amounts.deposited)
+        const withdrawn = BigInt(streamData.amounts.withdrawn)
+        const refunded = BigInt(streamData.amounts.refunded)
+        
+        // Calculate actual remaining amount: deposited - withdrawn - refunded
+        let remainingAmount = deposited - withdrawn - refunded
+        // Clamp to zero for tiny dust amounts (less than 1 wei)
+        if (remainingAmount < 0n) remainingAmount = 0n
+        
+        const isActive = remainingAmount > 0n
+        const isDepleted = remainingAmount === 0n
+        
+        // Debug log for stream 13807 specifically
+        if (id === '13807') {
+          console.log(`[DEBUG] Stream 13807:`, {
+            deposited: deposited.toString(),
+            withdrawn: withdrawn.toString(),
+            refunded: refunded.toString(),
+            remainingAmount: remainingAmount.toString(),
+            withdrawableAmount: withdrawableAmount.toString(),
+            isActive,
+            isDepleted,
+            contractIsDepleted: streamData.isDepleted
+          })
+        }
 
         return {
           streamId: id,
           sender: streamData.sender,
           recipient: streamData.recipient,
           asset: streamData.asset,
-          amount: BigInt(streamData.amounts.deposited),
+          amount: deposited,
           startTime: Number(streamData.startTime) * 1000,
           endTime: Number(streamData.endTime) * 1000,
-          withdrawnAmount: BigInt(streamData.amounts.withdrawn),
+          withdrawnAmount: withdrawn,
           withdrawableAmount: BigInt(withdrawableAmount),
+          remainingAmount,
           isActive,
           isCancelable: streamData.isCancelable,
-          isDepleted: streamData.isDepleted || isFullyWithdrawn,
+          isDepleted,
         } as StreamInfo;
       })
     );
@@ -283,10 +305,10 @@ export async function getTotalWithdrawableAmount(userAddress: Address): Promise<
 
 export async function getActiveStreamsCount(userAddress: Address): Promise<number> {
   const streams = await getUserStreams(userAddress);
-  return streams.filter((s) => s.withdrawableAmount > 0n).length;
+  return streams.filter((s) => s.remainingAmount > 0n).length;
 }
 
 export async function getInactiveStreamsCount(userAddress: Address): Promise<number> {
   const streams = await getUserStreams(userAddress);
-  return streams.filter((s) => s.withdrawableAmount === 0n).length;
+  return streams.filter((s) => s.remainingAmount === 0n).length;
 }

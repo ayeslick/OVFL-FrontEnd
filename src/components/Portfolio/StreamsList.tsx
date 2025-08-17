@@ -61,10 +61,10 @@ export function StreamsList({ refreshNonce, onMetricsUpdate }: StreamsListProps)
           const userStreams = await getUserStreams(address)
           setStreams(userStreams)
           
-          // Update metrics
+          // Update metrics based on remaining amount
           if (onMetricsUpdate) {
-            const activeCount = userStreams.filter(s => s.withdrawableAmount > 0n).length
-            const inactiveCount = userStreams.filter(s => s.withdrawableAmount === 0n).length
+            const activeCount = userStreams.filter(s => s.remainingAmount > 0n).length
+            const inactiveCount = userStreams.filter(s => s.remainingAmount === 0n).length
             onMetricsUpdate(activeCount, inactiveCount)
           }
         } catch (error) {
@@ -89,8 +89,8 @@ export function StreamsList({ refreshNonce, onMetricsUpdate }: StreamsListProps)
       getUserStreams(address).then((userStreams) => {
         setStreams(userStreams)
         if (onMetricsUpdate) {
-          const activeCount = userStreams.filter(s => s.withdrawableAmount > 0n).length
-          const inactiveCount = userStreams.filter(s => s.withdrawableAmount === 0n).length
+          const activeCount = userStreams.filter(s => s.remainingAmount > 0n).length
+          const inactiveCount = userStreams.filter(s => s.remainingAmount === 0n).length
           onMetricsUpdate(activeCount, inactiveCount)
         }
       }).catch(console.error)
@@ -171,8 +171,8 @@ export function StreamsList({ refreshNonce, onMetricsUpdate }: StreamsListProps)
         getUserStreams(address).then((userStreams) => {
           setStreams(userStreams)
           if (onMetricsUpdate) {
-            const activeCount = userStreams.filter(s => s.withdrawableAmount > 0n).length
-            const inactiveCount = userStreams.filter(s => s.withdrawableAmount === 0n).length
+            const activeCount = userStreams.filter(s => s.remainingAmount > 0n).length
+            const inactiveCount = userStreams.filter(s => s.remainingAmount === 0n).length
             onMetricsUpdate(activeCount, inactiveCount)
           }
         }).catch(console.error)
@@ -192,12 +192,12 @@ export function StreamsList({ refreshNonce, onMetricsUpdate }: StreamsListProps)
     )
   }
 
-  const activeStreams = streams.filter(s => s.withdrawableAmount > 0n)
-  const inactiveStreams = streams.filter(s => s.withdrawableAmount === 0n)
+  const activeStreams = streams.filter(s => s.remainingAmount > 0n)
+  const inactiveStreams = streams.filter(s => s.remainingAmount === 0n)
 
   const renderStreamCard = (stream: StreamInfo) => {
     const available = formatAvailable(stream.withdrawableAmount)
-    const isFullyWithdrawn = stream.withdrawnAmount >= stream.amount
+    const remaining = formatAvailable(stream.remainingAmount)
     
     return (
       <Card key={stream.streamId} className="ovfl-shadow hover:ovfl-shadow-lg transition-all duration-300">
@@ -234,7 +234,7 @@ export function StreamsList({ refreshNonce, onMetricsUpdate }: StreamsListProps)
             <div>
               <div className="text-muted-foreground">Status</div>
               <div className="font-mono font-medium">
-                {stream.isDepleted || isFullyWithdrawn ? 'Depleted' : 
+                {stream.remainingAmount === 0n ? 'Depleted' : 
                  Date.now() < stream.startTime ? 'Not started' :
                  Date.now() >= stream.endTime ? 'Ended' : 'Active'}
               </div>
