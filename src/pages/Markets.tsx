@@ -1,11 +1,12 @@
 import { MarketsTable } from '@/components/Markets/MarketsTable'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useState, useEffect } from 'react'
-import { fetchPendleMarket, type MarketData } from '@/lib/pendle'
+import { fetchPendleMarkets, type MarketData } from '@/lib/pendle'
+import { PENDLE_MARKETS } from '@/config/markets'
 
 
 export default function Markets() {
-  const [marketData, setMarketData] = useState<MarketData | null>(null)
+  const [marketData, setMarketData] = useState<MarketData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -14,11 +15,11 @@ export default function Markets() {
       try {
         setIsLoading(true)
         setError(null)
-        const market = await fetchPendleMarket()
-        if (!market) {
+        const markets = await fetchPendleMarkets([...PENDLE_MARKETS])
+        if (markets.length === 0) {
           setError('Failed to load market data. Please try again later.')
         } else {
-          setMarketData(market)
+          setMarketData(markets)
         }
       } catch (error) {
         console.error('Failed to load market data:', error)
@@ -30,11 +31,15 @@ export default function Markets() {
     loadMarketData()
   }, [])
 
-  const markets = marketData ? [{
-    ...marketData,
-    name: marketData.ptSymbol, // Use PT symbol as name
-    expiry: marketData.expiry.toISOString().split('T')[0] // Convert Date to string
-  }] : []
+  const markets = marketData.map(market => ({
+    ...market,
+    name: market.ptSymbol, // Use PT symbol as name
+    expiry: market.expiry.toISOString().split('T')[0] // Convert Date to string
+  }))
+
+  // Compute summary stats
+  const totalTVL = marketData.reduce((sum, market) => sum + market.tvl, 0)
+  const topAPY = marketData.length > 0 ? Math.max(...marketData.map(m => m.impliedAPY)) : 0
 
   const formatNumber = (value: number, decimals = 2) => {
     if (value >= 1e9) return `$${(value / 1e9).toFixed(decimals)}B`
@@ -67,16 +72,16 @@ export default function Markets() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">Total TVL</CardTitle>
               <div className="text-2xl font-bold">
-                {isLoading ? '...' : marketData ? formatNumber(marketData.tvl) : '--'}
+                {isLoading ? '...' : formatNumber(totalTVL)}
               </div>
             </CardHeader>
           </Card>
           
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Current APY</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Top APY</CardTitle>
               <div className="text-2xl font-bold text-success">
-                {isLoading ? '...' : marketData ? `${marketData.impliedAPY.toFixed(1)}%` : '--'}
+                {isLoading ? '...' : `${topAPY.toFixed(1)}%`}
               </div>
             </CardHeader>
           </Card>

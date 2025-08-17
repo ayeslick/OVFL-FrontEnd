@@ -206,6 +206,27 @@ function convertToMarketData(market: any, marketAddress?: string): MarketData | 
   }
 }
 
+export async function fetchPendleMarkets(addresses: string[]): Promise<MarketData[]> {
+  try {
+    console.debug('🔍 Fetching multiple Pendle markets:', addresses);
+    
+    const marketPromises = addresses.map(address => fetchPendleMarket(address));
+    const results = await Promise.allSettled(marketPromises);
+    
+    const markets = results
+      .filter((result): result is PromiseFulfilledResult<MarketData> => 
+        result.status === 'fulfilled' && result.value !== null
+      )
+      .map(result => result.value);
+    
+    console.debug(`✅ Successfully fetched ${markets.length}/${addresses.length} markets`);
+    return markets;
+  } catch (error) {
+    console.error('❌ Error fetching multiple Pendle markets:', error);
+    return [];
+  }
+}
+
 export async function fetchMarketHistory(days: number = 30): Promise<Array<{ date: string; apy: number; price: number }>> {
   try {
     // This would fetch historical data - for now return empty array
