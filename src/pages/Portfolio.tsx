@@ -4,8 +4,7 @@ import { Button } from '@/components/ui/button'
 import { StreamsList } from '@/components/Portfolio/StreamsList'
 import { TrendingUp, Wallet } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { getActiveStreamsCount } from '@/lib/sablier'
-import { getClaimableOVFL } from '@/lib/ovfl'
+import { getActiveStreamsCount, getTotalWithdrawableAmount } from '@/lib/sablier'
 
 export default function Portfolio() {
   const { isConnected, address } = useAccount()
@@ -19,7 +18,7 @@ export default function Portfolio() {
         try {
           setIsLoading(true)
           const [claimable, streamsCount] = await Promise.all([
-            getClaimableOVFL(address),
+            getTotalWithdrawableAmount(address),
             getActiveStreamsCount(address)
           ])
           setClaimableAmount(claimable)
@@ -31,6 +30,10 @@ export default function Portfolio() {
         }
       }
       fetchPortfolioData()
+      
+      // Polling every 15 seconds to keep data fresh
+      const interval = setInterval(fetchPortfolioData, 15000)
+      return () => clearInterval(interval)
     } else {
       setIsLoading(false)
     }

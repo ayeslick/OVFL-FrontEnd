@@ -31,6 +31,10 @@ export function StreamsList() {
         }
       }
       fetchStreams()
+      
+      // Polling every 20 seconds to refresh stream data
+      const interval = setInterval(fetchStreams, 20000)
+      return () => clearInterval(interval)
     } else {
       setIsLoadingStreams(false)
     }
@@ -119,7 +123,9 @@ export function StreamsList() {
                   <div>
                     <div className="text-muted-foreground">Status</div>
                     <div className="font-mono font-medium">
-                      {stream.isDepleted ? 'Depleted' : stream.isCancelable ? 'Active' : 'Settled'}
+                      {stream.isDepleted ? 'Depleted' : 
+                       currentTime.getTime() < stream.startTime ? 'Not started' :
+                       currentTime.getTime() >= stream.endTime ? 'Ended' : 'Active'}
                     </div>
                   </div>
                 </div>
