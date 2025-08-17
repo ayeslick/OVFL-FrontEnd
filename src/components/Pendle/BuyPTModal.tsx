@@ -93,6 +93,7 @@ export function BuyPTModal({
     setIsApproving(true)
     try {
       const amountBigInt = parseUnits(amount, Number(decimals))
+      console.log('[BUYPT] Approval starting:', { underlyingTokenAddress, amount, amountBigInt: amountBigInt.toString() })
       
       await writeContract({
         address: underlyingTokenAddress as `0x${string}`,
@@ -123,6 +124,7 @@ export function BuyPTModal({
     setIsBuying(true)
     try {
       const amountBigInt = parseUnits(amount, Number(decimals))
+      console.log('[BUYPT] Buy starting:', { marketAddress, underlyingTokenAddress, amount, amountBigInt: amountBigInt.toString() })
       
       const quote = await fetchPendleQuote({
         marketAddress,

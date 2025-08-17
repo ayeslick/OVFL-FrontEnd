@@ -197,6 +197,7 @@ export default function Deposit() {
       setIsLoading(true)
       const decimals = Number(ptDecimals)
       const amount = parseUnits(depositAmount, decimals)
+      console.log('[DEPOSIT] PT Approval starting:', { ptAddress: marketData.ptAddress, depositAmount, amount: amount.toString() })
       
       await writeContract({
         address: marketData.ptAddress as `0x${string}`,
@@ -228,6 +229,7 @@ export default function Deposit() {
       setIsLoading(true)
       // Approve unlimited amount
       const MAX_APPROVAL = 2n ** 256n - 1n
+      console.log('[DEPOSIT] wstETH Approval starting:', { WSTETH, OVFL_ADDRESS, MAX_APPROVAL: MAX_APPROVAL.toString() })
       
       await writeContract({
         address: WSTETH,
@@ -290,6 +292,7 @@ export default function Deposit() {
 
     try {
       setIsLoading(true)
+      console.log('[DEPOSIT] Deposit starting:', { marketId: marketData.id, amount: amount.toString() })
       
       await writeContract({
         address: OVFL_ADDRESS,
