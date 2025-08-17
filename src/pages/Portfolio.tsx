@@ -6,7 +6,8 @@ import { StreamsList } from '@/components/Portfolio/StreamsList'
 import { PositionsTable } from '@/components/Portfolio/PositionsTable'
 import { TrendingUp, Wallet } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { getTotalWithdrawableAmount, getActiveStreamsCount } from '@/lib/sablier'
+import { getActiveStreamsCount } from '@/lib/sablier'
+import { getClaimableOVFL } from '@/lib/ovfl'
 
 export default function Portfolio() {
   const { isConnected, address } = useAccount()
@@ -19,11 +20,11 @@ export default function Portfolio() {
       const fetchPortfolioData = async () => {
         try {
           setIsLoading(true)
-          const [totalWithdrawable, streamsCount] = await Promise.all([
-            getTotalWithdrawableAmount(address),
+          const [claimable, streamsCount] = await Promise.all([
+            getClaimableOVFL(address),
             getActiveStreamsCount(address)
           ])
-          setClaimableAmount(totalWithdrawable)
+          setClaimableAmount(claimable)
           setActiveStreamsCount(streamsCount)
         } catch (error) {
           console.error('Failed to fetch portfolio data:', error)
@@ -69,7 +70,7 @@ export default function Portfolio() {
         </div>
 
         {/* Portfolio Tabs */}
-        <Tabs defaultValue="positions" className="space-y-6">
+        <Tabs defaultValue="streams" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3 max-w-md">
             <TabsTrigger value="positions">Positions</TabsTrigger>
             <TabsTrigger value="streams">Streams</TabsTrigger>

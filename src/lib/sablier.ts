@@ -82,81 +82,115 @@ const SABLIER_ABI = [
     stateMutability: 'view',
     type: 'function',
   },
+  // ERC721 Transfer event for efficient log scanning
+  {
+    type: 'event',
+    name: 'Transfer',
+    anonymous: false,
+    inputs: [
+      { name: 'from', type: 'address', indexed: true },
+      { name: 'to', type: 'address', indexed: true },
+      { name: 'tokenId', type: 'uint256', indexed: true },
+    ],
+  },
 ] as const;
 
 export async function getUserStreams(userAddress: Address): Promise<StreamInfo[]> {
   try {
     console.debug('[SABLIER] Fetching streams for user:', userAddress, 'from contract:', SABLIER_V2_LOCKUP_LINEAR);
-    
-    const streams: StreamInfo[] = [];
 
-    // Get the next stream ID to know the range of existing streams
-    const nextStreamId = await publicClient.readContract({
-      address: SABLIER_V2_LOCKUP_LINEAR,
-      abi: SABLIER_ABI,
-      functionName: 'nextStreamId',
-    });
+    // 1) Pull candidate stream IDs via ERC721 Transfer logs (to/from user)
+    const [toLogs, fromLogs] = await Promise.all([
+      publicClient.getContractEvents({
+        address: SABLIER_V2_LOCKUP_LINEAR,
+        abi: SABLIER_ABI,
+        eventName: 'Transfer',
+        args: { to: userAddress } as any,
+        fromBlock: 0n,
+        toBlock: 'latest',
+      }),
+      publicClient.getContractEvents({
+        address: SABLIER_V2_LOCKUP_LINEAR,
+        abi: SABLIER_ABI,
+        eventName: 'Transfer',
+        args: { from: userAddress } as any,
+        fromBlock: 0n,
+        toBlock: 'latest',
+      }),
+    ]);
 
-    console.debug('[SABLIER] Next stream ID:', nextStreamId.toString());
+    const candidateIds = new Set<string>();
+    for (const log of [...toLogs, ...fromLogs]) {
+      const tokenId = (log as any).args?.tokenId as bigint | undefined;
+      if (tokenId !== undefined) candidateIds.add(tokenId.toString());
+    }
 
-    // Iterate through stream IDs from newest to oldest (up to nextStreamId - 1)
-    for (let streamId = Number(nextStreamId) - 1; streamId >= 1; streamId--) {
-      try {
-        // Check if this stream belongs to the user
-        const streamOwner = await publicClient.readContract({
-          address: SABLIER_V2_LOCKUP_LINEAR,
-          abi: SABLIER_ABI,
-          functionName: 'ownerOf',
-          args: [BigInt(streamId)],
-        });
+    if (candidateIds.size === 0) {
+      console.debug('[SABLIER] No candidate stream IDs found in logs');
+      return [];
+    }
 
-        if (streamOwner.toLowerCase() !== userAddress.toLowerCase()) {
-          continue; // Skip streams not owned by the user
-        }
+    // 2) Verify current ownership & fetch details for owned IDs
+    const ownedIds = (
+      await Promise.all(
+        Array.from(candidateIds).map(async (id) => {
+          try {
+            const owner = await publicClient.readContract({
+              address: SABLIER_V2_LOCKUP_LINEAR,
+              abi: SABLIER_ABI,
+              functionName: 'ownerOf',
+              args: [BigInt(id)],
+            });
+            return owner?.toLowerCase() === userAddress.toLowerCase() ? id : null;
+          } catch (e) {
+            // token may be burned/canceled
+            return null;
+          }
+        })
+      )
+    ).filter((x): x is string => !!x);
 
-        // Get stream details
-        const streamData = await publicClient.readContract({
-          address: SABLIER_V2_LOCKUP_LINEAR,
-          abi: SABLIER_ABI,
-          functionName: 'getStream',
-          args: [BigInt(streamId)],
-        });
+    if (ownedIds.length === 0) {
+      console.debug('[SABLIER] No streams currently owned by user');
+      return [];
+    }
 
-        // Get withdrawable amount
-        const withdrawableAmount = await publicClient.readContract({
-          address: SABLIER_V2_LOCKUP_LINEAR,
-          abi: SABLIER_ABI,
-          functionName: 'withdrawableAmountOf',
-          args: [BigInt(streamId)],
-        });
+    // 3) Fetch stream data & withdrawable amounts in parallel
+    const streams = await Promise.all(
+      ownedIds.map(async (id) => {
+        const [streamData, withdrawableAmount] = await Promise.all([
+          publicClient.readContract({
+            address: SABLIER_V2_LOCKUP_LINEAR,
+            abi: SABLIER_ABI,
+            functionName: 'getStream',
+            args: [BigInt(id)],
+          }),
+          publicClient.readContract({
+            address: SABLIER_V2_LOCKUP_LINEAR,
+            abi: SABLIER_ABI,
+            functionName: 'withdrawableAmountOf',
+            args: [BigInt(id)],
+          }),
+        ]);
 
-        // Convert timestamps to milliseconds for JavaScript Date compatibility
-        const startTimeMs = Number(streamData.startTime) * 1000;
-        const endTimeMs = Number(streamData.endTime) * 1000;
-
-        streams.push({
-          streamId: streamId.toString(),
+        return {
+          streamId: id,
           sender: streamData.sender,
           recipient: streamData.recipient,
           asset: streamData.asset,
           amount: BigInt(streamData.amounts.deposited),
-          startTime: startTimeMs,
-          endTime: endTimeMs,
+          startTime: Number(streamData.startTime) * 1000,
+          endTime: Number(streamData.endTime) * 1000,
           withdrawnAmount: BigInt(streamData.amounts.withdrawn),
           withdrawableAmount: BigInt(withdrawableAmount),
           isActive: !streamData.isDepleted && streamData.isStream,
           isCancelable: streamData.isCancelable,
           isDepleted: streamData.isDepleted,
-        });
-      } catch (error) {
-        // Stream might not exist or be accessible, continue to next
-        console.debug(`[SABLIER] Stream ${streamId} not accessible:`, error);
-      }
-    }
+        } as StreamInfo;
+      })
+    );
 
-    console.debug('[SABLIER] Found', streams.length, 'streams for user');
-    
-    // Sort by stream ID descending (newest first)
+    // Sort by newest first (numerically descending)
     return streams.sort((a, b) => Number(b.streamId) - Number(a.streamId));
   } catch (error) {
     console.error('[SABLIER] Failed to fetch user streams:', error);
@@ -166,10 +200,10 @@ export async function getUserStreams(userAddress: Address): Promise<StreamInfo[]
 
 export async function getTotalWithdrawableAmount(userAddress: Address): Promise<bigint> {
   const streams = await getUserStreams(userAddress);
-  return streams.reduce((total, stream) => total + stream.withdrawableAmount, BigInt(0));
+  return streams.reduce((total, stream) => total + stream.withdrawableAmount, 0n);
 }
 
 export async function getActiveStreamsCount(userAddress: Address): Promise<number> {
   const streams = await getUserStreams(userAddress);
-  return streams.filter(stream => stream.isActive).length;
+  return streams.filter((s) => s.isActive).length;
 }
