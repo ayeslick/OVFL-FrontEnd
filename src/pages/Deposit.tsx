@@ -25,7 +25,15 @@ export default function Deposit() {
   const [buyModalOpen, setBuyModalOpen] = useState(false)
   const [isLoadingMarket, setIsLoadingMarket] = useState(true)
 
-  const { writeContract } = useWriteContract()
+  const { writeContract, data: txHash, error: txError } = useWriteContract()
+
+  // Wait for transaction confirmations
+  const { isLoading: isApprovalPending, isSuccess: isApprovalConfirmed } = useWaitForTransactionReceipt({
+    hash: txHash,
+    query: {
+      enabled: !!txHash,
+    },
+  })
 
   // Read PT balance
   const { data: ptBalance, refetch: refetchPtBalance } = useReadContract({
@@ -35,6 +43,16 @@ export default function Deposit() {
     args: address ? [address] : undefined,
     query: {
       enabled: !!address && !!marketData?.ptAddress,
+    },
+  })
+
+  // Read PT decimals for proper parsing
+  const { data: ptDecimals } = useReadContract({
+    address: marketData?.ptAddress as `0x${string}`,
+    abi: ERC20_ABI,
+    functionName: 'decimals',
+    query: {
+      enabled: !!marketData?.ptAddress,
     },
   })
 
@@ -56,7 +74,7 @@ export default function Deposit() {
   })
 
   // Read allowance
-  const { data: allowance } = useReadContract({
+  const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: marketData?.ptAddress as `0x${string}`,
     abi: ERC20_ABI,
     functionName: 'allowance',
@@ -66,14 +84,17 @@ export default function Deposit() {
     },
   })
 
-  // Read OVFL preview
+  // Read OVFL preview  
   const { data: previewData } = useReadContract({
     address: OVFL_ADDRESS,
     abi: OVFL_ABI,
     functionName: 'previewStream',
-    args: marketData?.id && depositAmount ? [marketData.id as `0x${string}`, parseEther(depositAmount || '0')] : undefined,
+    args: marketData?.id && depositAmount && ptDecimals ? [
+      marketData.id as `0x${string}`, 
+      parseEther(depositAmount || '0') * BigInt(10 ** Number(ptDecimals || 18)) / BigInt(10 ** 18)
+    ] : undefined,
     query: {
-      enabled: !!marketData?.id && !!depositAmount && !isNaN(Number(depositAmount)) && Number(depositAmount) > 0,
+      enabled: !!marketData?.id && !!depositAmount && !isNaN(Number(depositAmount)) && Number(depositAmount) > 0 && !!ptDecimals,
     },
   })
 
@@ -126,21 +147,31 @@ export default function Deposit() {
   }, [location.search])
 
   const handleMaxClick = () => {
-    if (ptBalance) {
-      setDepositAmount(formatEther(ptBalance as bigint))
+    if (ptBalance && ptDecimals) {
+      const decimals = Number(ptDecimals)
+      const balance = ptBalance as bigint
+      const formattedBalance = decimals === 18 
+        ? formatEther(balance)
+        : (Number(balance) / (10 ** decimals)).toString()
+      setDepositAmount(formattedBalance)
     }
   }
 
   const handleApprove = async () => {
-    if (!marketData?.ptAddress || !depositAmount) return
+    if (!marketData?.ptAddress || !depositAmount || !ptDecimals) return
 
     try {
       setIsLoading(true)
+      const decimals = Number(ptDecimals)
+      const amount = decimals === 18 
+        ? parseEther(depositAmount)
+        : BigInt(Math.floor(Number(depositAmount) * (10 ** decimals)))
+      
       await writeContract({
         address: marketData.ptAddress as `0x${string}`,
         abi: ERC20_ABI,
         functionName: 'approve',
-        args: [OVFL_ADDRESS, parseEther(depositAmount)],
+        args: [OVFL_ADDRESS, amount],
         chain: ovflTenderly,
         account: address!,
       })
@@ -162,7 +193,7 @@ export default function Deposit() {
   }
 
   const handleDeposit = async () => {
-    if (!marketData || !depositAmount) {
+    if (!marketData || !depositAmount || !ptDecimals) {
       toast({
         title: 'Invalid Input',
         description: 'Please select a market and enter an amount',
@@ -171,11 +202,19 @@ export default function Deposit() {
       return
     }
 
+    const decimals = Number(ptDecimals)
+    const amount = decimals === 18 
+      ? parseEther(depositAmount)
+      : BigInt(Math.floor(Number(depositAmount) * (10 ** decimals)))
+
     // Validate minimum amount
-    if (minPtAmount && parseEther(depositAmount) < (minPtAmount as bigint)) {
+    if (minPtAmount && amount < (minPtAmount as bigint)) {
+      const minFormatted = decimals === 18 
+        ? formatEther(minPtAmount as bigint)
+        : (Number(minPtAmount as bigint) / (10 ** decimals)).toString()
       toast({
         title: 'Amount Too Small',
-        description: `Minimum deposit is ${formatEther(minPtAmount as bigint)} PT`,
+        description: `Minimum deposit is ${minFormatted} PT`,
         variant: 'destructive'
       })
       return
@@ -198,7 +237,7 @@ export default function Deposit() {
         address: OVFL_ADDRESS,
         abi: OVFL_ABI,
         functionName: 'deposit',
-        args: [marketData.id as `0x${string}`, parseEther(depositAmount)],
+        args: [marketData.id as `0x${string}`, amount],
         chain: ovflTenderly,
         account: address!,
       })
@@ -223,8 +262,38 @@ export default function Deposit() {
     }
   }
 
-  const isApprovalNeeded = allowance && depositAmount && parseEther(depositAmount) > (allowance as bigint)
+  // Handle transaction confirmations
+  useEffect(() => {
+    if (isApprovalConfirmed) {
+      refetchAllowance()
+      refetchPtBalance()
+      toast({
+        title: 'Approval Confirmed!',
+        description: 'You can now deposit your PT tokens',
+      })
+    }
+  }, [isApprovalConfirmed, refetchAllowance, refetchPtBalance, toast])
+
+  const isApprovalNeeded = allowance && depositAmount && ptDecimals && (() => {
+    const decimals = Number(ptDecimals)
+    const amount = decimals === 18 
+      ? parseEther(depositAmount)
+      : BigInt(Math.floor(Number(depositAmount) * (10 ** decimals)))
+    return amount > (allowance as bigint)
+  })()
+  
   const hasZeroPTBalance = ptBalance === 0n
+  
+  const getButtonDisabledReason = () => {
+    if (!marketData) return 'Loading market data...'
+    if (!depositAmount) return 'Enter deposit amount'
+    if (hasZeroPTBalance) return 'No PT balance'
+    if (!marketApproval?.[0]) return 'Market not approved by OVFL'
+    if (isLoading || isApprovalPending) return 'Transaction pending...'
+    return null
+  }
+  
+  const buttonDisabledReason = getButtonDisabledReason()
 
   return (
     <div className="min-h-screen bg-background">
@@ -297,12 +366,19 @@ export default function Deposit() {
               {/* Balances */}
               {address && (
                 <div className="p-4 bg-muted/50 rounded-lg space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">PT Balance</span>
-                     <span className="text-sm font-mono">
-                       {ptBalance ? formatEther(ptBalance as bigint) : '0'} {marketData?.ptSymbol || 'PT'}
-                     </span>
-                  </div>
+                   <div className="flex justify-between">
+                     <span className="text-sm text-muted-foreground">PT Balance</span>
+                      <span className="text-sm font-mono">
+                        {ptBalance && ptDecimals ? (() => {
+                          const decimals = Number(ptDecimals)
+                          const balance = ptBalance as bigint
+                          const formatted = decimals === 18 
+                            ? formatEther(balance)
+                            : (Number(balance) / (10 ** decimals)).toString()
+                          return `${formatted} ${marketData?.ptSymbol || 'PT'}`
+                        })() : `0 ${marketData?.ptSymbol || 'PT'}`}
+                      </span>
+                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">ovflETH Balance</span>
                      <span className="text-sm font-mono">
@@ -328,16 +404,22 @@ export default function Deposit() {
                     Price: {marketData.currentRate.toFixed(4)} PT/ETH • Discount: {((1 - marketData.currentRate) * 100).toFixed(2)}%
                   </div>
                 )}
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Balance: {ptBalance ? formatEther(ptBalance as bigint) : '0'} {marketData?.ptSymbol || 'PT'}</span>
-                  <button 
-                    className="text-primary hover:underline"
-                    onClick={handleMaxClick}
-                    disabled={!ptBalance}
-                  >
-                    Max
-                  </button>
-                </div>
+                 <div className="flex justify-between text-xs text-muted-foreground">
+                   <span>Balance: {ptBalance && ptDecimals ? (() => {
+                     const decimals = Number(ptDecimals)
+                     const balance = ptBalance as bigint
+                     return decimals === 18 
+                       ? formatEther(balance)
+                       : (Number(balance) / (10 ** decimals)).toString()
+                   })() : '0'} {marketData?.ptSymbol || 'PT'}</span>
+                   <button 
+                     className="text-primary hover:underline"
+                     onClick={handleMaxClick}
+                     disabled={!ptBalance}
+                   >
+                     Max
+                   </button>
+                 </div>
               </div>
 
               {/* Get PT Helper */}
@@ -376,21 +458,21 @@ export default function Deposit() {
               {isApprovalNeeded ? (
                 <Button 
                   onClick={handleApprove}
-                  disabled={!marketData || !depositAmount || isLoading || isLoadingMarket}
+                  disabled={!!buttonDisabledReason || isApprovalPending}
                   className="w-full"
                   size="lg"
                 >
-                  {isLoading ? 'Approving...' : `Approve ${marketData?.ptSymbol || 'PT'}`}
+                  {isLoading || isApprovalPending ? 'Approving...' : `Approve ${marketData?.ptSymbol || 'PT'}`}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               ) : (
                 <Button 
                   onClick={handleDeposit}
-                  disabled={!marketData || !depositAmount || isLoading || isLoadingMarket || hasZeroPTBalance || !marketApproval?.[0]}
+                  disabled={!!buttonDisabledReason}
                   className="w-full"
                   size="lg"
                 >
-                  {isLoading ? 'Processing...' : 'Deposit Principal Tokens'}
+                  {buttonDisabledReason || (isLoading ? 'Processing...' : 'Deposit Principal Tokens')}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               )}
