@@ -29,6 +29,7 @@ export async function fetchPendleQuote(request: PendleQuoteRequest): Promise<Pen
           receiverAddr: request.receiver,
           marketAddr: request.marketAddress,
           amountTokenIn: request.amountIn,
+          tokenInAddr: request.tokenIn,
           slippage: request.slippageBps / 10000, // Convert bps to decimal
         },
       }),
@@ -36,22 +37,23 @@ export async function fetchPendleQuote(request: PendleQuoteRequest): Promise<Pen
 
     if (response.ok) {
       const data = await response.json()
+      
+      // Validate response has required data
+      if (!data.transaction?.to || !data.transaction?.data || data.transaction.data === '0x') {
+        throw new Error('Invalid quote response: missing transaction data')
+      }
+      
       return {
         to: data.transaction.to,
         data: data.transaction.data,
         value: data.transaction.value,
         netPtOut: data.data.netPtOut,
       }
+    } else {
+      throw new Error(`Pendle backend error: ${response.status}`)
     }
   } catch (error) {
-    console.warn('Pendle backend unavailable, using fallback:', error)
-  }
-
-  // Fallback: Simple direct router call with minimal params
-  // This is a basic implementation for testing on Tenderly
-  return {
-    to: '0x00000000005bbb0ef59571e58418f9a4357b68a0', // PENDLE_ROUTER_V3
-    data: '0x', // Would need actual encoding for production
-    netPtOut: parseEther('0.95').toString(), // Conservative estimate
+    console.error('Pendle quote failed:', error)
+    throw new Error(`Unable to get Pendle quote: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }

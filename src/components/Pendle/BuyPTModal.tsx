@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useAccount, useReadContract, useWriteContract, useSendTransaction } from 'wagmi'
+import { useState, useEffect } from 'react'
+import { useAccount, useReadContract, useWriteContract, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi'
 import { parseEther, formatEther } from 'viem'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -37,7 +37,12 @@ export function BuyPTModal({
   const [isBuying, setIsBuying] = useState(false)
 
   const { writeContract } = useWriteContract()
-  const { sendTransaction } = useSendTransaction()
+  const { sendTransaction, data: txHash } = useSendTransaction()
+  
+  // Wait for buy transaction confirmation
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash: txHash,
+  })
 
   // Read underlying token balance
   const { data: balance } = useReadContract({
@@ -108,6 +113,11 @@ export function BuyPTModal({
         receiver: address,
       })
 
+      // Validate quote has valid transaction data
+      if (!quote.data || quote.data === '0x') {
+        throw new Error('Invalid quote: no transaction data')
+      }
+
       await sendTransaction({
         to: quote.to as `0x${string}`,
         data: quote.data as `0x${string}`,
@@ -115,24 +125,35 @@ export function BuyPTModal({
         chainId: ovflTenderly.id,
         account: address,
       })
-
+      
       toast({
         title: 'Purchase submitted',
-        description: `Buying PT with ${amount} underlying tokens`,
+        description: `Transaction sent. Waiting for confirmation...`,
       })
-
-      onPurchased()
-      onOpenChange(false)
     } catch (error) {
       toast({
         title: 'Purchase failed',
         description: error instanceof Error ? error.message : 'Unknown error',
         variant: 'destructive',
       })
-    } finally {
       setIsBuying(false)
     }
   }
+
+  // Handle transaction confirmation
+  useEffect(() => {
+    if (isConfirmed && txHash) {
+      toast({
+        title: 'Purchase successful!',
+        description: `Successfully bought PT with ${amount} underlying tokens`,
+      })
+      
+      onPurchased()
+      onOpenChange(false)
+      setIsBuying(false)
+      setAmount('')
+    }
+  }, [isConfirmed, txHash, amount, onPurchased, onOpenChange, toast])
 
   const amountBigInt = amount ? parseEther(amount) : 0n
   const isApprovalNeeded = allowance !== undefined && amountBigInt > (allowance as bigint)
@@ -181,10 +202,10 @@ export function BuyPTModal({
             
             <Button
               onClick={handleBuy}
-              disabled={isBuying || !hasBalance || isApprovalNeeded || !amount}
+              disabled={isBuying || isConfirming || !hasBalance || isApprovalNeeded || !amount}
               className="w-full"
             >
-              {isBuying ? 'Buying...' : 'Buy PT'}
+              {isBuying || isConfirming ? 'Processing...' : 'Buy PT'}
             </Button>
           </div>
         </div>
