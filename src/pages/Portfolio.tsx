@@ -1,10 +1,7 @@
 import { useAccount } from 'wagmi'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { StreamsList } from '@/components/Portfolio/StreamsList'
-import { PositionsTable } from '@/components/Portfolio/PositionsTable'
-import { HistoryList } from '@/components/Portfolio/HistoryList'
 import { TrendingUp, Wallet } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { getActiveStreamsCount } from '@/lib/sablier'
@@ -70,36 +67,14 @@ export default function Portfolio() {
           </Card>
         </div>
 
-        {/* Portfolio Tabs */}
-        <Tabs defaultValue="streams" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 max-w-md">
-            <TabsTrigger value="positions">Positions</TabsTrigger>
-            <TabsTrigger value="streams">Streams</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="positions" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-primary">Your Positions</h2>
-            </div>
-            <PositionsTable />
-          </TabsContent>
-
-          <TabsContent value="streams" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-primary">Active Streams</h2>
-              <Button>Claim All Available</Button>
-            </div>
-            <StreamsList />
-          </TabsContent>
-
-          <TabsContent value="history" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-primary">Transaction History</h2>
-            </div>
-            <HistoryList />
-          </TabsContent>
-        </Tabs>
+        {/* Active Streams */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-primary">Active Streams</h2>
+            <Button>Claim All Available</Button>
+          </div>
+          <StreamsList />
+        </div>
       </div>
     </div>
   )
