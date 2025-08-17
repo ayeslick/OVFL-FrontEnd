@@ -248,7 +248,8 @@ export async function getUserStreams(userAddress: Address): Promise<StreamInfo[]
         const nowSec = Math.floor(Date.now() / 1000)
         const startSec = Number(streamData.startTime)
         const endSec = Number(streamData.endTime)
-        const isActive = !streamData.isDepleted && startSec <= nowSec && nowSec < endSec
+        const isFullyWithdrawn = BigInt(streamData.amounts.withdrawn) >= BigInt(streamData.amounts.deposited)
+        const isActive = !streamData.isDepleted && !isFullyWithdrawn && startSec <= nowSec && nowSec < endSec
 
         return {
           streamId: id,
@@ -262,7 +263,7 @@ export async function getUserStreams(userAddress: Address): Promise<StreamInfo[]
           withdrawableAmount: BigInt(withdrawableAmount),
           isActive,
           isCancelable: streamData.isCancelable,
-          isDepleted: streamData.isDepleted,
+          isDepleted: streamData.isDepleted || isFullyWithdrawn,
         } as StreamInfo;
       })
     );
@@ -282,5 +283,10 @@ export async function getTotalWithdrawableAmount(userAddress: Address): Promise<
 
 export async function getActiveStreamsCount(userAddress: Address): Promise<number> {
   const streams = await getUserStreams(userAddress);
-  return streams.filter((s) => s.isActive).length;
+  return streams.filter((s) => s.withdrawableAmount > 0n).length;
+}
+
+export async function getInactiveStreamsCount(userAddress: Address): Promise<number> {
+  const streams = await getUserStreams(userAddress);
+  return streams.filter((s) => s.withdrawableAmount === 0n).length;
 }

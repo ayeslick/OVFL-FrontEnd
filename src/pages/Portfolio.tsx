@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { StreamsList } from '@/components/Portfolio/StreamsList'
 import { TrendingUp, Wallet } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { getActiveStreamsCount, getTotalWithdrawableAmount, getUserStreams, SABLIER_ADDRESS, SABLIER_ABI } from '@/lib/sablier'
+import { getActiveStreamsCount, getInactiveStreamsCount, getTotalWithdrawableAmount, getUserStreams, SABLIER_ADDRESS, SABLIER_ABI } from '@/lib/sablier'
 import { useToast } from '@/hooks/use-toast'
 
 export default function Portfolio() {
@@ -14,6 +14,7 @@ export default function Portfolio() {
   const { writeContractAsync } = useWriteContract()
   const [claimableAmount, setClaimableAmount] = useState<bigint>(0n)
   const [activeStreamsCount, setActiveStreamsCount] = useState<number>(0)
+  const [inactiveStreamsCount, setInactiveStreamsCount] = useState<number>(0)
   const [isLoading, setIsLoading] = useState(true)
   const [refreshTick, setRefreshTick] = useState(0)
   const [isClaimingAll, setIsClaimingAll] = useState(false)
@@ -23,12 +24,14 @@ export default function Portfolio() {
       const fetchPortfolioData = async (isInitial = false) => {
         try {
           if (isInitial) setIsLoading(true)
-          const [claimable, streamsCount] = await Promise.all([
+          const [claimable, activeCount, inactiveCount] = await Promise.all([
             getTotalWithdrawableAmount(address),
-            getActiveStreamsCount(address)
+            getActiveStreamsCount(address),
+            getInactiveStreamsCount(address)
           ])
           setClaimableAmount(claimable)
-          setActiveStreamsCount(streamsCount)
+          setActiveStreamsCount(activeCount)
+          setInactiveStreamsCount(inactiveCount)
         } catch (error) {
           console.error('Failed to fetch portfolio data:', error)
         } finally {
@@ -111,12 +114,14 @@ export default function Portfolio() {
       })
 
       // Refresh data and trigger StreamsList refresh
-      const [claimable, streamsCount] = await Promise.all([
+      const [claimable, activeCount, inactiveCount] = await Promise.all([
         getTotalWithdrawableAmount(address),
-        getActiveStreamsCount(address)
+        getActiveStreamsCount(address),
+        getInactiveStreamsCount(address)
       ])
       setClaimableAmount(claimable)
-      setActiveStreamsCount(streamsCount)
+      setActiveStreamsCount(activeCount)
+      setInactiveStreamsCount(inactiveCount)
       setRefreshTick(prev => prev + 1)
 
     } catch (error: any) {
@@ -144,7 +149,7 @@ export default function Portfolio() {
         </div>
 
         {/* Summary Bar */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">          
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">          
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">Claimable Now</CardTitle>
@@ -160,6 +165,13 @@ export default function Portfolio() {
               <div className="text-2xl font-bold">{isLoading ? '...' : activeStreamsCount}</div>
             </CardHeader>
           </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Inactive Streams</CardTitle>
+              <div className="text-2xl font-bold">{isLoading ? '...' : inactiveStreamsCount}</div>
+            </CardHeader>
+          </Card>
         </div>
 
         {/* Active Streams */}
@@ -173,7 +185,10 @@ export default function Portfolio() {
               {isClaimingAll ? 'Claiming...' : 'Claim All Available'}
             </Button>
           </div>
-          <StreamsList key={refreshTick} />
+          <StreamsList refreshNonce={refreshTick} onMetricsUpdate={(active, inactive) => {
+            setActiveStreamsCount(active)
+            setInactiveStreamsCount(inactive)
+          }} />
         </div>
       </div>
     </div>
