@@ -4,10 +4,11 @@ import { Badge } from '@/components/ui/badge'
 import { useState, useEffect } from 'react'
 import { createPublicClient, http, formatEther, Address } from 'viem'
 import { SABLIER_ADDRESS, SABLIER_ABI } from '@/lib/sablier'
+import { ovflTenderly } from '@/config/wagmi'
 import { History, ExternalLink } from 'lucide-react'
 
 interface HistoryEvent {
-  type: 'CreateLockupLinearStream' | 'WithdrawFromLockupStream' | 'CancelLockupStream' | 'Transfer'
+  type: 'create' | 'withdraw' | 'cancel' | 'transfer'
   streamId: string
   timestamp: number
   blockNumber: bigint
@@ -18,13 +19,8 @@ interface HistoryEvent {
 }
 
 const client = createPublicClient({
-  transport: http('https://rpc.tenderly.co/fork/61abc493-8c5f-4a3b-8b23-1b40d9cc2a83'),
-  chain: {
-    id: 1,
-    name: 'OVFL Tenderly',
-    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-    rpcUrls: { default: { http: ['https://rpc.tenderly.co/fork/61abc493-8c5f-4a3b-8b23-1b40d9cc2a83'] } }
-  }
+  chain: ovflTenderly,
+  transport: http(),
 })
 
 export function HistoryList() {
@@ -41,93 +37,197 @@ export function HistoryList() {
     const fetchHistory = async () => {
       try {
         setIsLoading(true)
+        console.debug('Fetching transaction history for:', address)
         
-        // Get recent blocks for event fetching
-        const latestBlock = await client.getBlockNumber()
-        const fromBlock = latestBlock - 10000n // Last ~10k blocks
-        
-        // Fetch all relevant events
-        const [createEvents, withdrawEvents, cancelEvents, transferEvents] = await Promise.all([
-          // CreateLockupLinearStream events
-          client.getContractEvents({
-            address: SABLIER_ADDRESS,
-            abi: SABLIER_ABI,
-            eventName: 'CreateLockupLinearStream',
-            fromBlock,
-            toBlock: latestBlock,
-          }),
-          // WithdrawFromLockupStream events  
-          client.getContractEvents({
-            address: SABLIER_ADDRESS,
-            abi: SABLIER_ABI,
-            eventName: 'WithdrawFromLockupStream',
-            fromBlock,
-            toBlock: latestBlock,
-            args: { to: address }
-          }),
-          // CancelLockupStream events
-          client.getContractEvents({
-            address: SABLIER_ADDRESS,
-            abi: SABLIER_ABI,
-            eventName: 'CancelLockupStream',
-            fromBlock,
-            toBlock: latestBlock,
-          }),
-          // Transfer events (ERC721)
-          client.getContractEvents({
-            address: SABLIER_ADDRESS,
-            abi: SABLIER_ABI,
-            eventName: 'Transfer',
-            fromBlock,
-            toBlock: latestBlock,
-            args: { to: address }
-          })
-        ])
-
-        // Process and combine events
-        const allEvents: HistoryEvent[] = []
-
-        // Add withdraw events
-        withdrawEvents.forEach(event => {
-          allEvents.push({
-            type: 'WithdrawFromLockupStream',
-            streamId: event.args.streamId?.toString() || '',
-            timestamp: 0, // Will be filled from block
-            blockNumber: event.blockNumber,
-            txHash: event.transactionHash,
-            amount: event.args.withdrawnAmount
-          })
+        // Get create events where user is recipient
+        const createEvents = await client.getLogs({
+          address: SABLIER_ADDRESS,
+          event: {
+            type: 'event',
+            name: 'CreateLockupLinearStream',
+            inputs: [
+              { name: 'streamId', type: 'uint256', indexed: true },
+              { name: 'funder', type: 'address', indexed: false },
+              { name: 'sender', type: 'address', indexed: true },
+              { name: 'recipient', type: 'address', indexed: true },
+              { name: 'amounts', type: 'tuple', indexed: false },
+              { name: 'asset', type: 'address', indexed: false },
+              { name: 'cancelable', type: 'bool', indexed: false },
+              { name: 'transferable', type: 'bool', indexed: false },
+              { name: 'timestamps', type: 'tuple', indexed: false },
+              { name: 'broker', type: 'address', indexed: false },
+            ],
+          },
+          args: {
+            recipient: address,
+          },
+          fromBlock: 0n,
+          toBlock: 'latest',
         })
 
-        // Add transfer events (stream ownership)
-        transferEvents.forEach(event => {
+        // Get withdraw events
+        const withdrawEvents = await client.getLogs({
+          address: SABLIER_ADDRESS,
+          event: {
+            type: 'event',
+            name: 'WithdrawFromLockupStream',
+            inputs: [
+              { name: 'streamId', type: 'uint256', indexed: true },
+              { name: 'to', type: 'address', indexed: true },
+              { name: 'amount', type: 'uint128', indexed: false },
+            ],
+          },
+          args: {
+            to: address,
+          },
+          fromBlock: 0n,
+          toBlock: 'latest',
+        })
+
+        // Get cancel events where user is recipient or sender
+        const cancelEventsRecipient = await client.getLogs({
+          address: SABLIER_ADDRESS,
+          event: {
+            type: 'event',
+            name: 'CancelLockupStream',
+            inputs: [
+              { name: 'streamId', type: 'uint256', indexed: true },
+              { name: 'sender', type: 'address', indexed: true },
+              { name: 'recipient', type: 'address', indexed: true },
+              { name: 'senderAmount', type: 'uint128', indexed: false },
+              { name: 'recipientAmount', type: 'uint128', indexed: false },
+            ],
+          },
+          args: {
+            recipient: address,
+          },
+          fromBlock: 0n,
+          toBlock: 'latest',
+        })
+
+        const cancelEventsSender = await client.getLogs({
+          address: SABLIER_ADDRESS,
+          event: {
+            type: 'event',
+            name: 'CancelLockupStream',
+            inputs: [
+              { name: 'streamId', type: 'uint256', indexed: true },
+              { name: 'sender', type: 'address', indexed: true },
+              { name: 'recipient', type: 'address', indexed: true },
+              { name: 'senderAmount', type: 'uint128', indexed: false },
+              { name: 'recipientAmount', type: 'uint128', indexed: false },
+            ],
+          },
+          args: {
+            sender: address,
+          },
+          fromBlock: 0n,
+          toBlock: 'latest',
+        })
+
+        // Get transfer events (NFT transfers) - both sent and received
+        const transferEventsReceived = await client.getLogs({
+          address: SABLIER_ADDRESS,
+          event: {
+            type: 'event',
+            name: 'Transfer',
+            inputs: [
+              { name: 'from', type: 'address', indexed: true },
+              { name: 'to', type: 'address', indexed: true },
+              { name: 'tokenId', type: 'uint256', indexed: true },
+            ],
+          },
+          args: {
+            to: address,
+          },
+          fromBlock: 0n,
+          toBlock: 'latest',
+        })
+
+        const transferEventsSent = await client.getLogs({
+          address: SABLIER_ADDRESS,
+          event: {
+            type: 'event',
+            name: 'Transfer',
+            inputs: [
+              { name: 'from', type: 'address', indexed: true },
+              { name: 'to', type: 'address', indexed: true },
+              { name: 'tokenId', type: 'uint256', indexed: true },
+            ],
+          },
+          args: {
+            from: address,
+          },
+          fromBlock: 0n,
+          toBlock: 'latest',
+        })
+
+        console.debug('Events found:', {
+          create: createEvents.length,
+          withdraw: withdrawEvents.length,
+          cancel: cancelEventsRecipient.length + cancelEventsSender.length,
+          transfer: transferEventsReceived.length + transferEventsSent.length
+        })
+
+        const allEvents: HistoryEvent[] = []
+
+        // Process create events
+        for (const event of createEvents) {
+          const block = await client.getBlock({ blockNumber: event.blockNumber })
           allEvents.push({
-            type: 'Transfer',
+            type: 'create',
+            streamId: event.args.streamId?.toString() || '',
+            timestamp: Number(block.timestamp),
+            blockNumber: event.blockNumber,
+            txHash: event.transactionHash,
+            from: event.args.sender,
+          })
+        }
+
+        // Process withdraw events
+        for (const event of withdrawEvents) {
+          const block = await client.getBlock({ blockNumber: event.blockNumber })
+          allEvents.push({
+            type: 'withdraw',
+            streamId: event.args.streamId?.toString() || '',
+            timestamp: Number(block.timestamp),
+            blockNumber: event.blockNumber,
+            txHash: event.transactionHash,
+            amount: event.args.amount,
+          })
+        }
+
+        // Process cancel events
+        for (const event of [...cancelEventsRecipient, ...cancelEventsSender]) {
+          const block = await client.getBlock({ blockNumber: event.blockNumber })
+          allEvents.push({
+            type: 'cancel',
+            streamId: event.args.streamId?.toString() || '',
+            timestamp: Number(block.timestamp),
+            blockNumber: event.blockNumber,
+            txHash: event.transactionHash,
+            from: event.args.sender,
+            to: event.args.recipient,
+          })
+        }
+
+        // Process transfer events
+        for (const event of [...transferEventsReceived, ...transferEventsSent]) {
+          const block = await client.getBlock({ blockNumber: event.blockNumber })
+          allEvents.push({
+            type: 'transfer',
             streamId: event.args.tokenId?.toString() || '',
-            timestamp: 0,
+            timestamp: Number(block.timestamp),
             blockNumber: event.blockNumber,
             txHash: event.transactionHash,
             from: event.args.from,
-            to: event.args.to
+            to: event.args.to,
           })
-        })
+        }
 
-        // Get timestamps for all events
-        const uniqueBlocks = [...new Set(allEvents.map(e => e.blockNumber))]
-        const blockPromises = uniqueBlocks.map(blockNumber => 
-          client.getBlock({ blockNumber })
-        )
-        const blocks = await Promise.all(blockPromises)
-        const blockTimestamps = new Map(
-          blocks.map(block => [block.number, Number(block.timestamp)])
-        )
-
-        // Add timestamps and sort
-        allEvents.forEach(event => {
-          event.timestamp = blockTimestamps.get(event.blockNumber) || 0
-        })
-
+        // Sort by timestamp descending
         allEvents.sort((a, b) => b.timestamp - a.timestamp)
+        console.debug('Total events processed:', allEvents.length)
         setEvents(allEvents)
       } catch (error) {
         console.error('Failed to fetch history:', error)
@@ -141,14 +241,14 @@ export function HistoryList() {
 
   const getEventBadge = (type: string) => {
     switch (type) {
-      case 'WithdrawFromLockupStream':
-        return <Badge variant="default">Withdraw</Badge>
-      case 'Transfer':
-        return <Badge variant="secondary">Received</Badge>
-      case 'CreateLockupLinearStream':
-        return <Badge variant="outline">Created</Badge>
-      case 'CancelLockupStream':
+      case 'create':
+        return <Badge variant="default">Created</Badge>
+      case 'withdraw':
+        return <Badge variant="secondary">Withdrawal</Badge>
+      case 'cancel':
         return <Badge variant="destructive">Cancelled</Badge>
+      case 'transfer':
+        return <Badge variant="outline">Transfer</Badge>
       default:
         return <Badge variant="outline">{type}</Badge>
     }
@@ -202,15 +302,21 @@ export function HistoryList() {
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <a
-                  href={`https://etherscan.io/tx/${event.txHash}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
-                >
-                  <ExternalLink className="w-3 h-3" />
-                  View
-                </a>
+                {ovflTenderly.blockExplorers?.default?.url ? (
+                  <a
+                    href={`${ovflTenderly.blockExplorers.default.url}/tx/${event.txHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    View
+                  </a>
+                ) : (
+                  <span className="text-xs text-muted-foreground font-mono">
+                    {event.txHash.slice(0, 10)}...{event.txHash.slice(-8)}
+                  </span>
+                )}
               </div>
             </div>
           </CardContent>
