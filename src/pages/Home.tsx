@@ -53,7 +53,7 @@ export default function Home() {
               Borrow Against Your Streaming Yield
             </h1>
             <p className="text-xl text-muted-foreground mb-8">
-              Deposit PT tokens, receive instant liquidity with ovflETH, keep streaming yield until maturity
+              Deposit PT tokens, receive instant liquidity with ovflETH, borrow/sell your stream
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg">

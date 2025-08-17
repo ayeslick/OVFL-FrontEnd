@@ -32,6 +32,7 @@ export default function Markets() {
 
   const markets = marketData ? [{
     ...marketData,
+    name: marketData.ptSymbol, // Use PT symbol as name
     expiry: marketData.expiry.toISOString().split('T')[0] // Convert Date to string
   }] : []
 

@@ -224,27 +224,22 @@ export default function Deposit() {
   }
 
   const handleApproveWstETH = async () => {
-    if (!previewData || !feeBps || !basisPoints) return
-
     try {
       setIsLoading(true)
-      // Calculate required wstETH fee: toUser * feeBps / BASIS_POINTS
-      const toUser = previewData[0] as bigint
-      const feeBpsBn = feeBps as unknown as bigint
-      const basisBn = basisPoints as unknown as bigint
-      const feeAmount = (toUser * feeBpsBn) / basisBn
+      // Approve unlimited amount
+      const MAX_APPROVAL = 2n ** 256n - 1n
       
       await writeContract({
         address: WSTETH,
         abi: ERC20_ABI,
         functionName: 'approve',
-        args: [OVFL_ADDRESS, feeAmount],
+        args: [OVFL_ADDRESS, MAX_APPROVAL],
         chain: ovflTenderly,
         account: address!,
       })
       
       toast({
-        title: 'wstETH Approval Submitted',
+        title: 'Approving unlimited wstETH allowance to OVFL…',
         description: 'Please wait for the transaction to confirm',
       })
     } catch (error) {
@@ -333,8 +328,8 @@ export default function Deposit() {
       refetchPtBalance()
       refetchWstETHBalance()
       toast({
-        title: 'Approval Confirmed!',
-        description: 'Transaction confirmed successfully',
+        title: 'wstETH allowance granted',
+        description: 'You can now proceed with your deposit',
       })
     }
   }, [isApprovalConfirmed, refetchAllowance, refetchWstETHAllowance, refetchPtBalance, refetchWstETHBalance, toast])
@@ -353,8 +348,7 @@ export default function Deposit() {
     return amount > (allowance as bigint)
   })())
 
-  const isWstETHApprovalNeeded = Boolean(wstETHAllowance !== undefined && requiredWstETHFee > 0n && 
-    requiredWstETHFee > (wstETHAllowance as bigint))
+  const isWstETHApprovalNeeded = Boolean(wstETHAllowance !== undefined && wstETHAllowance === 0n)
   
   const hasZeroPTBalance = ptBalance === 0n
   const hasInsufficientWstETH = wstETHBalance !== undefined && requiredWstETHFee > (wstETHBalance as bigint)
@@ -402,7 +396,7 @@ export default function Deposit() {
                   <div className="text-sm text-muted-foreground">Loading market data...</div>
                 ) : marketData ? (
                   <div className="p-3 bg-muted/50 rounded-lg">
-                    <div className="font-medium">{marketData.name}</div>
+                    <div className="font-medium">{marketData.ptSymbol}</div>
                     <div className="text-sm text-success">{marketData.impliedAPY.toFixed(1)}% APY</div>
                     <div className="text-xs text-muted-foreground">
                       Status: {marketApproval?.[0] ? 'Approved' : 'Not Approved'}
