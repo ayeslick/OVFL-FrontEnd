@@ -12,6 +12,7 @@ import { OVFL_ABI } from '@/lib/abi/ovfl'
 import { ERC20_ABI } from '@/lib/abi/erc20'
 import { OVFL_ADDRESS } from '@/lib/addresses'
 import { ovflTenderly } from '@/config/wagmi'
+import { BuyPTModal } from '@/components/Pendle/BuyPTModal'
 
 export default function Deposit() {
   const { address, isConnected } = useAccount()
@@ -21,12 +22,13 @@ export default function Deposit() {
   const [depositAmount, setDepositAmount] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [marketData, setMarketData] = useState<MarketData | null>(null)
+  const [buyModalOpen, setBuyModalOpen] = useState(false)
   const [isLoadingMarket, setIsLoadingMarket] = useState(true)
 
   const { writeContract } = useWriteContract()
 
   // Read PT balance
-  const { data: ptBalance } = useReadContract({
+  const { data: ptBalance, refetch: refetchPtBalance } = useReadContract({
     address: marketData?.ptAddress as `0x${string}`,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
@@ -347,15 +349,25 @@ export default function Deposit() {
                       <div className="text-sm font-medium text-warning">No PT Balance</div>
                       <div className="text-xs text-muted-foreground">Get PT tokens first to make deposits</div>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => window.open(marketData.pendleUrl, '_blank')}
-                      className="ml-2"
-                    >
-                      <ExternalLink className="w-3 h-3 mr-1" />
-                      Get PT
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setBuyModalOpen(true)}
+                        className="ml-2"
+                      >
+                        Buy PT on Tenderly
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => window.open(marketData.pendleUrl, '_blank')}
+                        className="ml-1"
+                      >
+                        <ExternalLink className="w-3 h-3 mr-1" />
+                        Get PT
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -430,6 +442,21 @@ export default function Deposit() {
           </Card>
         </div>
       </div>
+
+      {/* Buy PT Modal */}
+      {marketData && (
+        <BuyPTModal
+          open={buyModalOpen}
+          onOpenChange={setBuyModalOpen}
+          marketAddress={marketData.id}
+          underlyingTokenAddress={marketData.underlyingAddress || '0x7f39C581F595B53c5cb31dA36bC6DaDAbdFfFfFf'} // Default to wstETH
+          ptAddress={marketData.ptAddress}
+          onPurchased={() => {
+            refetchPtBalance()
+            setTimeout(() => refetchPtBalance(), 3000) // Refetch again after 3s
+          }}
+        />
+      )}
     </div>
   )
 }
