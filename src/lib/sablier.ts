@@ -143,6 +143,28 @@ export const SABLIER_ABI = [
       { name: 'recipientAmount', type: 'uint128', indexed: false },
     ],
   },
+  // Withdrawal functions
+  {
+    inputs: [
+      { name: 'streamId', type: 'uint256' },
+      { name: 'to', type: 'address' },
+      { name: 'amount', type: 'uint128' }
+    ],
+    name: 'withdraw',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'streamId', type: 'uint256' },
+      { name: 'to', type: 'address' }
+    ],
+    name: 'withdrawMax',
+    outputs: [{ name: 'withdrawnAmount', type: 'uint128' }],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
 ] as const;
 
 export async function getUserStreams(userAddress: Address): Promise<StreamInfo[]> {

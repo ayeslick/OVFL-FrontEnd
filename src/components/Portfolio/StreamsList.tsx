@@ -5,8 +5,33 @@ import { Badge } from '@/components/ui/badge'
 import { Clock, TrendingUp, Wallet, AlertCircle } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useToast } from '@/hooks/use-toast'
-import { useAccount } from 'wagmi'
-import { getUserStreams, type StreamInfo } from '@/lib/sablier'
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { getUserStreams, type StreamInfo, SABLIER_ADDRESS } from '@/lib/sablier'
+
+// Simplified ABI for withdrawal functions only
+const WITHDRAWAL_ABI = [
+  {
+    inputs: [
+      { name: 'streamId', type: 'uint256' },
+      { name: 'to', type: 'address' },
+      { name: 'amount', type: 'uint128' }
+    ],
+    name: 'withdraw',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'streamId', type: 'uint256' },
+      { name: 'to', type: 'address' }
+    ],
+    name: 'withdrawMax',
+    outputs: [{ name: 'withdrawnAmount', type: 'uint128' }],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+] as const
 
 export function StreamsList() {
   const { toast } = useToast()
@@ -14,8 +39,13 @@ export function StreamsList() {
   const [streams, setStreams] = useState<StreamInfo[]>([])
   const [currentTime, setCurrentTime] = useState(new Date())
   const [withdrawAmounts, setWithdrawAmounts] = useState<{ [key: string]: string }>({})
-  const [isLoading, setIsLoading] = useState(false)
   const [isLoadingStreams, setIsLoadingStreams] = useState(true)
+  const [processingStream, setProcessingStream] = useState<string | null>(null)
+  
+  const { writeContract, data: hash, isPending } = useWriteContract()
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash,
+  })
 
   useEffect(() => {
     if (isConnected && address) {
@@ -52,13 +82,77 @@ export function StreamsList() {
     return (Number(withdrawableAmount) / 1e18).toFixed(4)
   }
 
-  const handleWithdraw = async (streamId: string) => {
-    // Real withdrawal implementation would go here
-    toast({
-      title: 'Feature Coming Soon',
-      description: 'Stream withdrawals will be available soon',
-    })
+  const handleWithdraw = async (streamId: string, isMax: boolean = false) => {
+    if (!address) return
+    
+    try {
+      setProcessingStream(streamId)
+      
+      if (isMax) {
+        // Withdraw all available
+        writeContract({
+          address: SABLIER_ADDRESS,
+          abi: WITHDRAWAL_ABI,
+          functionName: 'withdrawMax',
+          args: [BigInt(streamId), address],
+        } as any)
+      } else {
+        // Withdraw specific amount
+        const amount = withdrawAmounts[streamId]
+        if (!amount || Number(amount) <= 0) {
+          toast({
+            title: 'Invalid Amount',
+            description: 'Please enter a valid withdrawal amount',
+            variant: 'destructive',
+          })
+          setProcessingStream(null)
+          return
+        }
+        
+        writeContract({
+          address: SABLIER_ADDRESS,
+          abi: WITHDRAWAL_ABI,
+          functionName: 'withdraw',
+          args: [BigInt(streamId), address, BigInt(Math.floor(Number(amount) * 1e18))],
+        } as any)
+      }
+      
+      toast({
+        title: 'Transaction Submitted',
+        description: 'Your withdrawal is being processed...',
+      })
+    } catch (error: any) {
+      console.error('Withdrawal error:', error)
+      toast({
+        title: 'Withdrawal Failed',
+        description: error?.message || 'Failed to submit withdrawal transaction',
+        variant: 'destructive',
+      })
+    } finally {
+      setProcessingStream(null)
+    }
   }
+  
+  // Handle transaction confirmation
+  useEffect(() => {
+    if (isConfirmed) {
+      toast({
+        title: 'Withdrawal Successful',
+        description: 'Your funds have been withdrawn successfully',
+      })
+      // Clear the input for the processed stream
+      if (processingStream) {
+        setWithdrawAmounts(prev => ({
+          ...prev,
+          [processingStream]: ''
+        }))
+      }
+      // Refresh streams data
+      if (address) {
+        getUserStreams(address).then(setStreams).catch(console.error)
+      }
+    }
+  }, [isConfirmed, processingStream, address])
 
   if (!isConnected) {
     return null
@@ -159,17 +253,17 @@ export function StreamsList() {
                   
                   <div className="flex gap-2">
                     <Button
-                      onClick={() => handleWithdraw(stream.streamId)}
-                      disabled={isLoading || !withdrawAmounts[stream.streamId] || Number(available) <= 0}
+                      onClick={() => handleWithdraw(stream.streamId, false)}
+                      disabled={isPending || isConfirming || !withdrawAmounts[stream.streamId] || Number(available) <= 0 || processingStream === stream.streamId}
                       className="flex-1"
                       size="sm"
                     >
-                      {isLoading ? 'Processing...' : 'Withdraw'}
+                      {(isPending || isConfirming) && processingStream === stream.streamId ? 'Processing...' : 'Withdraw'}
                       <Wallet className="w-4 h-4 ml-2" />
                     </Button>
                     <Button
-                      onClick={() => handleWithdraw(stream.streamId)}
-                      disabled={isLoading || Number(available) <= 0}
+                      onClick={() => handleWithdraw(stream.streamId, true)}
+                      disabled={isPending || isConfirming || Number(available) <= 0 || processingStream === stream.streamId}
                       variant="outline"
                       size="sm"
                     >
