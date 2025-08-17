@@ -50,7 +50,8 @@ export async function fetchPendleQuote(request: PendleQuoteRequest): Promise<Pen
         netPtOut: data.data.netPtOut,
       }
     } else {
-      throw new Error(`Pendle backend error: ${response.status}`)
+      const errorText = await response.text()
+      throw new Error(`Pendle backend error ${response.status}: ${errorText || 'Unknown error'}`)
     }
   } catch (error) {
     console.error('Pendle quote failed:', error)
