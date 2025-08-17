@@ -49,34 +49,28 @@ export function StreamsList() {
 
   useEffect(() => {
     if (isConnected && address) {
-      const fetchStreams = async () => {
+      const fetchStreams = async (isInitial = false) => {
         try {
-          setIsLoadingStreams(true)
+          if (isInitial) setIsLoadingStreams(true)
           const userStreams = await getUserStreams(address)
           setStreams(userStreams)
         } catch (error) {
           console.error('Failed to fetch streams:', error)
         } finally {
-          setIsLoadingStreams(false)
+          if (isInitial) setIsLoadingStreams(false)
         }
       }
-      fetchStreams()
+      fetchStreams(true)
       
-      // Polling every 20 seconds to refresh stream data
-      const interval = setInterval(fetchStreams, 20000)
+      // Polling every 30 seconds to refresh stream data (smoother polling)
+      const interval = setInterval(() => fetchStreams(false), 30000)
       return () => clearInterval(interval)
     } else {
       setIsLoadingStreams(false)
     }
   }, [isConnected, address])
 
-  // Update time every second for real-time display
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(new Date())
-    }, 1000)
-    return () => clearInterval(interval)
-  }, [])
+  // Remove per-second time updates to avoid jarring re-renders
 
   const formatAvailable = (withdrawableAmount: bigint): string => {
     return (Number(withdrawableAmount) / 1e18).toFixed(4)
@@ -123,30 +117,28 @@ export function StreamsList() {
       })
     } catch (error: any) {
       console.error('Withdrawal error:', error)
+      setProcessingStream(null)
       toast({
         title: 'Withdrawal Failed',
         description: error?.message || 'Failed to submit withdrawal transaction',
         variant: 'destructive',
       })
-    } finally {
-      setProcessingStream(null)
     }
   }
   
   // Handle transaction confirmation
   useEffect(() => {
-    if (isConfirmed) {
+    if (isConfirmed && processingStream) {
       toast({
         title: 'Withdrawal Successful',
         description: 'Your funds have been withdrawn successfully',
       })
       // Clear the input for the processed stream
-      if (processingStream) {
-        setWithdrawAmounts(prev => ({
-          ...prev,
-          [processingStream]: ''
-        }))
-      }
+      setWithdrawAmounts(prev => ({
+        ...prev,
+        [processingStream]: ''
+      }))
+      setProcessingStream(null)
       // Refresh streams data
       if (address) {
         getUserStreams(address).then(setStreams).catch(console.error)
@@ -218,8 +210,8 @@ export function StreamsList() {
                     <div className="text-muted-foreground">Status</div>
                     <div className="font-mono font-medium">
                       {stream.isDepleted ? 'Depleted' : 
-                       currentTime.getTime() < stream.startTime ? 'Not started' :
-                       currentTime.getTime() >= stream.endTime ? 'Ended' : 'Active'}
+                       Date.now() < stream.startTime ? 'Not started' :
+                       Date.now() >= stream.endTime ? 'Ended' : 'Active'}
                     </div>
                   </div>
                 </div>
