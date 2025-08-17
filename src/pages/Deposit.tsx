@@ -11,6 +11,7 @@ import { fetchPendleMarket, type MarketData } from '@/lib/pendle'
 import { OVFL_ABI } from '@/lib/abi/ovfl'
 import { ERC20_ABI } from '@/lib/abi/erc20'
 import { OVFL_ADDRESS } from '@/lib/addresses'
+import { ovflTenderly } from '@/config/wagmi'
 
 export default function Deposit() {
   const { address, isConnected } = useAccount()
@@ -138,6 +139,8 @@ export default function Deposit() {
         abi: ERC20_ABI,
         functionName: 'approve',
         args: [OVFL_ADDRESS, parseEther(depositAmount)],
+        chain: ovflTenderly,
+        account: address!,
       })
       
       toast({
@@ -194,6 +197,8 @@ export default function Deposit() {
         abi: OVFL_ABI,
         functionName: 'deposit',
         args: [marketData.id as `0x${string}`, parseEther(depositAmount)],
+        chain: ovflTenderly,
+        account: address!,
       })
       
       toast({
