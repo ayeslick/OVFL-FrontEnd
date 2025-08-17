@@ -37,7 +37,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
             <AlertTriangle className="w-12 h-12 text-warning mx-auto mb-4" />
             <CardTitle className="text-2xl">Wrong Network</CardTitle>
             <CardDescription>
-              Please switch to OVFL Tenderly (Chain ID: {ovflTenderly.id}) in your wallet to continue
+              Please switch to OVFL Tenderly (Chain ID: 73571) in your wallet to continue
             </CardDescription>
           </CardHeader>
         </Card>

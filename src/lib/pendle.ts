@@ -45,6 +45,11 @@ export interface MarketData {
   volume24h: number;
   status: 'active' | 'expiring' | 'expired';
   daysToExpiry: number;
+  // Enhanced for OVFL integration
+  ptAddress: string;
+  ptSymbol: string;
+  underlyingAddress: string;
+  pendleUrl: string;
 }
 
 export async function fetchPendleMarket(marketAddress?: string): Promise<MarketData | null> {
@@ -156,8 +161,10 @@ function convertToMarketData(market: any, marketAddress?: string): MarketData | 
                 market.pt?.symbol || 
                 'PT weETH 26DEC2024';
 
+    const marketId = market.address || marketAddress || MARKET_ADDRESS;
+    
     const marketData = {
-      id: market.address || marketAddress || MARKET_ADDRESS,
+      id: marketId,
       name,
       underlying,
       expiry,
@@ -167,6 +174,11 @@ function convertToMarketData(market: any, marketAddress?: string): MarketData | 
       volume24h: market.tradingVolume?.usd || market.volume?.usd24h || market.volume24h || 0,
       status,
       daysToExpiry,
+      // Enhanced for OVFL integration
+      ptAddress: market.pt?.address || market.ptAddress || marketId,
+      ptSymbol: market.pt?.symbol || market.ptSymbol || `PT-${underlying}`,
+      underlyingAddress: market.underlyingAsset?.address || market.underlying?.address || '',
+      pendleUrl: `https://app.pendle.finance/trade/markets/${marketId}/swap?view=pt&chain=ethereum`,
     };
 
     // Debug log for verification (like Python script)

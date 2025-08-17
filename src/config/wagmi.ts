@@ -3,7 +3,7 @@ import { coinbaseWallet, metaMask } from 'wagmi/connectors'
 
 // OVFL Tenderly Virtual Network - the only chain we support
 export const ovflTenderly = {
-  id: 17777,
+  id: 73571,
   name: 'OVFL Tenderly',
   nativeCurrency: {
     name: 'Ether',
@@ -12,7 +12,7 @@ export const ovflTenderly = {
   },
   rpcUrls: {
     default: {
-      http: ['https://virtual.mainnet.us-east.rpc.tenderly.co/be0dadf3-31fb-4b53-9d7a-084f93b2021a'],
+      http: ['https://virtual.mainnet.us-east.rpc.tenderly.co/db666ddf-0cbc-413c-9f73-fcb2d925db62'],
     },
   },
   blockExplorers: {
@@ -34,6 +34,6 @@ export const wagmiConfig = createConfig({
     }),
   ],
   transports: {
-    [ovflTenderly.id]: http(),
+    [ovflTenderly.id]: http('https://virtual.mainnet.us-east.rpc.tenderly.co/db666ddf-0cbc-413c-9f73-fcb2d925db62'),
   },
 })
