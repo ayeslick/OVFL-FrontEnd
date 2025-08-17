@@ -44,11 +44,11 @@ const topMarkets = [
 
 export default function Home() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex items-center justify-center">
       {/* Hero Section */}
-      <section className="relative py-16 px-4 sm:px-6 lg:px-8">
-        <div className="relative max-w-6xl mx-auto">
-          <div className="text-center mb-12">
+      <section className="relative py-24 px-4 sm:px-6 lg:px-8 w-full">
+        <div className="relative max-w-4xl mx-auto">
+          <div className="text-center">
             <h1 className="text-4xl font-bold text-primary mb-4">
               Borrow Against Your Streaming Yield
             </h1>
