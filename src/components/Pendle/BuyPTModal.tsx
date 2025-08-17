@@ -7,9 +7,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { ERC20_ABI } from '@/lib/abi/erc20'
-import { PENDLE_ROUTER_V3 } from '@/lib/addresses'
 import { fetchPendleQuote } from '@/lib/pendle-quote'
 import { ovflTenderly } from '@/config/wagmi'
+
+// Pendle Router V3 address (Mainnet/Tenderly Fork)
+const PENDLE_ROUTER_V3 = '0x00000000005bbb0ef59571e58418f9a4357b68a0' as const
 
 interface BuyPTModalProps {
   open: boolean
