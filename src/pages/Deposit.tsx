@@ -120,6 +120,14 @@ export default function Deposit() {
   })
 
   // Safe parsing for deposit amount with proper validation
+  // Helper to safely convert values to BigInt
+  const toBigInt = (value: any): bigint => {
+    if (typeof value === 'bigint') return value
+    if (typeof value === 'number') return BigInt(Math.floor(value))
+    if (typeof value === 'string') return BigInt(value)
+    return BigInt(0)
+  }
+
   const parsedDepositAmount = useMemo(() => {
     if (!ptDecimals || !depositAmount || depositAmount.trim() === '') return undefined
     
@@ -359,20 +367,38 @@ export default function Deposit() {
     }
   }, [isApprovalConfirmed, refetchAllowance, refetchWstETHAllowance, refetchPtBalance, refetchWstETHBalance, toast])
 
-  // Calculate required wstETH fee
-  const requiredWstETHFee = previewData && feeBps && basisPoints ? (() => {
-    const toUser = previewData[0] as bigint
-    const feeBpsBn = feeBps as unknown as bigint
-    const basisBn = basisPoints as unknown as bigint
-    return (toUser * feeBpsBn) / basisBn
-  })() : 0n
+  // Calculate required wstETH fee (BigInt-safe)
+  const requiredWstETHFee = useMemo(() => {
+    if (!previewData || !feeBps || !basisPoints) return 0n
+    
+    try {
+      console.debug('[DEPOSIT] Fee calculation inputs:', { 
+        previewData: typeof previewData, 
+        feeBps: typeof feeBps, 
+        basisPoints: typeof basisPoints 
+      })
+      
+      const toUser = toBigInt(previewData[0])
+      const feeBpsBig = toBigInt(feeBps)
+      const basisBig = toBigInt(basisPoints)
+      
+      if (basisBig === 0n) return 0n // Avoid division by zero
+      
+      const result = (toUser * feeBpsBig) / basisBig
+      console.debug('[DEPOSIT] Fee calculation result:', result.toString())
+      return result
+    } catch (error) {
+      console.error('[DEPOSIT] Fee calculation error:', error)
+      return 0n
+    }
+  }, [previewData, feeBps, basisPoints])
 
-  const isPTApprovalNeeded = Boolean(allowance !== undefined && parsedDepositAmount !== undefined && parsedDepositAmount > (allowance as bigint))
+  const isPTApprovalNeeded = Boolean(allowance !== undefined && parsedDepositAmount !== undefined && parsedDepositAmount > toBigInt(allowance))
 
-  const isWstETHApprovalNeeded = Boolean(wstETHAllowance !== undefined && wstETHAllowance === 0n)
+  const isWstETHApprovalNeeded = Boolean(wstETHAllowance !== undefined && toBigInt(wstETHAllowance) === 0n)
   
-  const hasZeroPTBalance = ptBalance === 0n
-  const hasInsufficientWstETH = wstETHBalance !== undefined && requiredWstETHFee > (wstETHBalance as bigint)
+  const hasZeroPTBalance = toBigInt(ptBalance) === 0n
+  const hasInsufficientWstETH = wstETHBalance !== undefined && requiredWstETHFee > toBigInt(wstETHBalance)
   
   const getButtonDisabledReason = () => {
     if (!marketData) return 'Loading market data...'
