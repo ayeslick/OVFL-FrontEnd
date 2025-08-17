@@ -230,7 +230,9 @@ export default function Deposit() {
       setIsLoading(true)
       // Calculate required wstETH fee: toUser * feeBps / BASIS_POINTS
       const toUser = previewData[0] as bigint
-      const feeAmount = (toUser * BigInt(feeBps as number) / BigInt(basisPoints as bigint))
+      const feeBpsBn = feeBps as unknown as bigint
+      const basisBn = basisPoints as unknown as bigint
+      const feeAmount = (toUser * feeBpsBn) / basisBn
       
       await writeContract({
         address: WSTETH,
@@ -340,7 +342,9 @@ export default function Deposit() {
   // Calculate required wstETH fee
   const requiredWstETHFee = previewData && feeBps && basisPoints ? (() => {
     const toUser = previewData[0] as bigint
-    return (toUser * BigInt(feeBps as number) / BigInt(basisPoints as bigint))
+    const feeBpsBn = feeBps as unknown as bigint
+    const basisBn = basisPoints as unknown as bigint
+    return (toUser * feeBpsBn) / basisBn
   })() : 0n
 
   const isPTApprovalNeeded = Boolean(allowance !== undefined && depositAmount && ptDecimals && (() => {
@@ -615,17 +619,17 @@ export default function Deposit() {
 
       {/* Buy PT Modal */}
       {marketData && (
-        <BuyPTModal
-          open={buyModalOpen}
-          onOpenChange={setBuyModalOpen}
-          marketAddress={marketData.id}
-          underlyingTokenAddress={marketData.underlyingAddress || '0x7f39C581F595B53c5cb31dA36bC6DaDAbdFfFfFf'} // Default to wstETH
-          ptAddress={marketData.ptAddress}
-          onPurchased={() => {
-            refetchPtBalance()
-            setTimeout(() => refetchPtBalance(), 3000) // Refetch again after 3s
-          }}
-        />
+                  <BuyPTModal
+                    open={buyModalOpen}
+                    onOpenChange={setBuyModalOpen}
+                    marketAddress={marketData.id}
+                    underlyingTokenAddress={marketData.underlyingAddress || WSTETH}
+                    ptAddress={marketData.ptAddress}
+                    onPurchased={() => {
+                      refetchPtBalance()
+                      setBuyModalOpen(false)
+                    }}
+                  />
       )}
     </div>
   )

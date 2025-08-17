@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAccount, useReadContract, useWriteContract, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi'
-import { parseEther, formatEther } from 'viem'
+import { parseUnits, formatUnits } from 'viem'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,9 +9,7 @@ import { useToast } from '@/hooks/use-toast'
 import { ERC20_ABI } from '@/lib/abi/erc20'
 import { fetchPendleQuote } from '@/lib/pendle-quote'
 import { ovflTenderly } from '@/config/wagmi'
-
-// Pendle Router V3 address (Mainnet/Tenderly Fork)
-const PENDLE_ROUTER_V3 = '0x00000000005bbb0ef59571e58418f9a4357b68a0' as const
+import { PENDLE_ROUTER_V3 } from '@/lib/addresses'
 
 interface BuyPTModalProps {
   open: boolean
@@ -36,8 +34,13 @@ export function BuyPTModal({
   const [isApproving, setIsApproving] = useState(false)
   const [isBuying, setIsBuying] = useState(false)
 
-  const { writeContract } = useWriteContract()
+  const { writeContract, data: approvalTxHash } = useWriteContract()
   const { sendTransaction, data: txHash } = useSendTransaction()
+  
+  // Wait for approval transaction confirmation
+  const { isLoading: isApprovalPending, isSuccess: isApprovalConfirmed } = useWaitForTransactionReceipt({
+    hash: approvalTxHash,
+  })
   
   // Wait for buy transaction confirmation
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
@@ -53,6 +56,22 @@ export function BuyPTModal({
     chainId: ovflTenderly.id,
   })
 
+  // Read underlying token decimals
+  const { data: decimals } = useReadContract({
+    address: underlyingTokenAddress as `0x${string}`,
+    abi: ERC20_ABI,
+    functionName: 'decimals',
+    chainId: ovflTenderly.id,
+  })
+
+  // Read underlying token symbol
+  const { data: symbol } = useReadContract({
+    address: underlyingTokenAddress as `0x${string}`,
+    abi: ERC20_ABI,
+    functionName: 'symbol',
+    chainId: ovflTenderly.id,
+  })
+
   // Read allowance
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: underlyingTokenAddress as `0x${string}`,
@@ -63,52 +82,52 @@ export function BuyPTModal({
   })
 
   const handleMaxClick = () => {
-    if (balance) {
-      setAmount(formatEther(balance as bigint))
+    if (balance && decimals) {
+      setAmount(formatUnits(balance as bigint, Number(decimals)))
     }
   }
 
   const handleApprove = async () => {
-    if (!amount || !address) return
+    if (!amount || !address || !decimals) return
 
     setIsApproving(true)
     try {
+      const amountBigInt = parseUnits(amount, Number(decimals))
+      
       await writeContract({
         address: underlyingTokenAddress as `0x${string}`,
         abi: ERC20_ABI,
         functionName: 'approve',
-        args: [PENDLE_ROUTER_V3, parseEther(amount)],
+        args: [PENDLE_ROUTER_V3, amountBigInt],
         chain: ovflTenderly,
         account: address,
       })
 
       toast({
-        title: 'Approval submitted',
+        title: `Approving ${amount} ${symbol || 'tokens'}`,
         description: 'Waiting for confirmation...',
       })
-
-      // Refetch allowance after approval
-      setTimeout(() => refetchAllowance(), 2000)
     } catch (error) {
       toast({
-        title: 'Approval failed',
+        title: `Approval failed for ${symbol || 'tokens'}`,
         description: error instanceof Error ? error.message : 'Unknown error',
         variant: 'destructive',
       })
-    } finally {
       setIsApproving(false)
     }
   }
 
   const handleBuy = async () => {
-    if (!amount || !address) return
+    if (!amount || !address || !decimals) return
 
     setIsBuying(true)
     try {
+      const amountBigInt = parseUnits(amount, Number(decimals))
+      
       const quote = await fetchPendleQuote({
         marketAddress,
         tokenIn: underlyingTokenAddress,
-        amountIn: parseEther(amount).toString(),
+        amountIn: amountBigInt.toString(),
         slippageBps: 100, // 1% slippage
         receiver: address,
       })
@@ -127,7 +146,7 @@ export function BuyPTModal({
       })
       
       toast({
-        title: 'Purchase submitted',
+        title: `Swapping ${amount} ${symbol || 'tokens'} for PT`,
         description: `Transaction sent. Waiting for confirmation...`,
       })
     } catch (error) {
@@ -140,12 +159,24 @@ export function BuyPTModal({
     }
   }
 
+  // Handle approval confirmation
+  useEffect(() => {
+    if (isApprovalConfirmed && approvalTxHash) {
+      toast({
+        title: `Approval confirmed for ${symbol || 'tokens'}`,
+        description: 'You can now proceed with the swap',
+      })
+      setIsApproving(false)
+      refetchAllowance()
+    }
+  }, [isApprovalConfirmed, approvalTxHash, symbol, toast, refetchAllowance])
+
   // Handle transaction confirmation
   useEffect(() => {
     if (isConfirmed && txHash) {
       toast({
-        title: 'Purchase successful!',
-        description: `Successfully bought PT with ${amount} underlying tokens`,
+        title: 'Swap confirmed!',
+        description: `Successfully spent ${amount} ${symbol || 'tokens'} for PT`,
       })
       
       onPurchased()
@@ -153,9 +184,9 @@ export function BuyPTModal({
       setIsBuying(false)
       setAmount('')
     }
-  }, [isConfirmed, txHash, amount, onPurchased, onOpenChange, toast])
+  }, [isConfirmed, txHash, amount, symbol, onPurchased, onOpenChange, toast])
 
-  const amountBigInt = amount ? parseEther(amount) : 0n
+  const amountBigInt = amount && decimals ? parseUnits(amount, Number(decimals)) : 0n
   const isApprovalNeeded = allowance !== undefined && amountBigInt > (allowance as bigint)
   const hasBalance = balance && amountBigInt <= (balance as bigint)
 
@@ -182,9 +213,9 @@ export function BuyPTModal({
                 Max
               </Button>
             </div>
-            {balance && (
+            {balance && decimals && (
               <p className="text-sm text-muted-foreground mt-1">
-                Balance: {formatEther(balance as bigint)} tokens
+                Balance: {formatUnits(balance as bigint, Number(decimals))} {String(symbol) || 'tokens'}
               </p>
             )}
           </div>
@@ -193,19 +224,19 @@ export function BuyPTModal({
             {isApprovalNeeded && (
               <Button
                 onClick={handleApprove}
-                disabled={isApproving || !hasBalance}
+                disabled={isApproving || isApprovalPending || !hasBalance || allowance === undefined}
                 className="w-full"
               >
-                {isApproving ? 'Approving...' : 'Approve Tokens'}
+                {isApproving || isApprovalPending ? 'Approving...' : `Approve ${symbol || 'Tokens'}`}
               </Button>
             )}
             
             <Button
               onClick={handleBuy}
-              disabled={isBuying || isConfirming || !hasBalance || isApprovalNeeded || !amount}
+              disabled={isBuying || isConfirming || !hasBalance || isApprovalNeeded || !amount || allowance === undefined}
               className="w-full"
             >
-              {isBuying || isConfirming ? 'Processing...' : 'Buy PT'}
+              {allowance === undefined ? 'Loading allowance...' : (isBuying || isConfirming ? 'Processing...' : 'Buy PT')}
             </Button>
           </div>
         </div>
