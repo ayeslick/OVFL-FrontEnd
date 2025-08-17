@@ -119,28 +119,26 @@ export default function Deposit() {
     functionName: 'BASIS_POINTS',
   })
 
-  // Safe parsing for deposit amount (decimal friendly)
+  // Safe parsing for deposit amount with proper validation
   const parsedDepositAmount = useMemo(() => {
-    console.debug('[DEPOSIT] Parsing depositAmount:', { depositAmount, ptDecimals })
+    if (!ptDecimals || !depositAmount || depositAmount.trim() === '') return undefined
     
-    if (!ptDecimals || !depositAmount) return undefined
+    // Normalize commas to dots and remove extra whitespace
+    const normalizedAmount = depositAmount.replace(/,/g, '.').trim()
     
-    // Validate input format: allow decimals
-    const validFormat = /^[0-9]+\.?[0-9]*$/.test(depositAmount)
-    if (!validFormat) {
-      console.debug('[DEPOSIT] Invalid format:', depositAmount)
-      return undefined
-    }
+    // Strict validation: numbers with optional single decimal point
+    const validFormat = /^[0-9]+(\.[0-9]*)?$/.test(normalizedAmount)
+    if (!validFormat) return undefined
     
-    const num = Number(depositAmount)
-    if (num <= 0 || !isFinite(num)) {
-      console.debug('[DEPOSIT] Invalid number:', num)
-      return undefined
-    }
+    // Handle trailing dot case (e.g., "1.")
+    const cleanAmount = normalizedAmount.endsWith('.') ? normalizedAmount.slice(0, -1) : normalizedAmount
+    if (cleanAmount === '') return undefined
+    
+    const num = Number(cleanAmount)
+    if (num <= 0 || !isFinite(num)) return undefined
     
     try {
-      const result = parseUnits(depositAmount, Number(ptDecimals))
-      console.debug('[DEPOSIT] Parsed successfully:', { depositAmount, result: result.toString() })
+      const result = parseUnits(cleanAmount, Number(ptDecimals))
       return result
     } catch (error) {
       console.debug('[DEPOSIT] Parse error:', error)
@@ -643,19 +641,19 @@ export default function Deposit() {
         </div>
       </div>
 
-      {/* Buy PT Modal */}
-      {marketData && (
-                  <BuyPTModal
-                    open={buyModalOpen}
-                    onOpenChange={setBuyModalOpen}
-                    marketAddress={marketData.id}
-                    underlyingTokenAddress={marketData.underlyingAddress || WSTETH}
-                    ptAddress={marketData.ptAddress}
-                    onPurchased={() => {
-                      refetchPtBalance()
-                      setBuyModalOpen(false)
-                    }}
-                  />
+      {/* Buy PT Modal - Only render when marketData is complete */}
+      {marketData && marketData.id && marketData.ptAddress && (marketData.underlyingAddress || WSTETH) && (
+        <BuyPTModal
+          open={buyModalOpen}
+          onOpenChange={setBuyModalOpen}
+          marketAddress={marketData.id}
+          underlyingTokenAddress={marketData.underlyingAddress || WSTETH}
+          ptAddress={marketData.ptAddress}
+          onPurchased={() => {
+            refetchPtBalance()
+            setBuyModalOpen(false)
+          }}
+        />
       )}
     </div>
   )
