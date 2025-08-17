@@ -8,7 +8,7 @@ const publicClient = createPublicClient({
 });
 
 // Sablier V2 Lockup Linear contract address for OVFL Tenderly
-const SABLIER_V2_LOCKUP_LINEAR = (import.meta.env.VITE_SABLIER_LOCKUP_LINEAR || '0x3962f6585946823440d274ad7c719b02b49de51e') as Address;
+export const SABLIER_ADDRESS = (import.meta.env.VITE_SABLIER_LOCKUP_LINEAR || '0x3962f6585946823440d274ad7c719b02b49de51e') as Address;
 
 export interface StreamInfo {
   streamId: string;
@@ -26,7 +26,7 @@ export interface StreamInfo {
 }
 
 // Sablier Contract ABI (matching the provided contract)
-const SABLIER_ABI = [
+export const SABLIER_ABI = [
   {
     inputs: [{ name: 'streamId', type: 'uint256' }],
     name: 'getStream',
@@ -93,16 +93,66 @@ const SABLIER_ABI = [
       { name: 'tokenId', type: 'uint256', indexed: true },
     ],
   },
+  // Sablier stream events
+  {
+    type: 'event',
+    name: 'CreateLockupLinearStream',
+    anonymous: false,
+    inputs: [
+      { name: 'streamId', type: 'uint256', indexed: true },
+      { name: 'funder', type: 'address', indexed: true },
+      { name: 'sender', type: 'address', indexed: true },
+      { name: 'recipient', type: 'address', indexed: true },
+      { name: 'amounts', type: 'tuple', components: [
+        { name: 'deposited', type: 'uint128' },
+        { name: 'withdrawn', type: 'uint128' },
+        { name: 'refunded', type: 'uint128' }
+      ]},
+      { name: 'asset', type: 'address', indexed: false },
+      { name: 'cancelable', type: 'bool', indexed: false },
+      { name: 'transferable', type: 'bool', indexed: false },
+      { name: 'timestamps', type: 'tuple', components: [
+        { name: 'start', type: 'uint40' },
+        { name: 'cliff', type: 'uint40' },
+        { name: 'end', type: 'uint40' }
+      ]},
+      { name: 'broker', type: 'address', indexed: false },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'WithdrawFromLockupStream',
+    anonymous: false,
+    inputs: [
+      { name: 'streamId', type: 'uint256', indexed: true },
+      { name: 'to', type: 'address', indexed: true },
+      { name: 'asset', type: 'address', indexed: true },
+      { name: 'withdrawnAmount', type: 'uint128', indexed: false },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'CancelLockupStream',
+    anonymous: false,
+    inputs: [
+      { name: 'streamId', type: 'uint256', indexed: true },
+      { name: 'sender', type: 'address', indexed: true },
+      { name: 'recipient', type: 'address', indexed: true },
+      { name: 'asset', type: 'address', indexed: true },
+      { name: 'senderAmount', type: 'uint128', indexed: false },
+      { name: 'recipientAmount', type: 'uint128', indexed: false },
+    ],
+  },
 ] as const;
 
 export async function getUserStreams(userAddress: Address): Promise<StreamInfo[]> {
   try {
-    console.debug('[SABLIER] Fetching streams for user:', userAddress, 'from contract:', SABLIER_V2_LOCKUP_LINEAR);
+    console.debug('[SABLIER] Fetching streams for user:', userAddress, 'from contract:', SABLIER_ADDRESS);
 
     // 1) Pull candidate stream IDs via ERC721 Transfer logs (to/from user)
     const [toLogs, fromLogs] = await Promise.all([
       publicClient.getContractEvents({
-        address: SABLIER_V2_LOCKUP_LINEAR,
+        address: SABLIER_ADDRESS,
         abi: SABLIER_ABI,
         eventName: 'Transfer',
         args: { to: userAddress } as any,
@@ -110,7 +160,7 @@ export async function getUserStreams(userAddress: Address): Promise<StreamInfo[]
         toBlock: 'latest',
       }),
       publicClient.getContractEvents({
-        address: SABLIER_V2_LOCKUP_LINEAR,
+        address: SABLIER_ADDRESS,
         abi: SABLIER_ABI,
         eventName: 'Transfer',
         args: { from: userAddress } as any,
@@ -136,7 +186,7 @@ export async function getUserStreams(userAddress: Address): Promise<StreamInfo[]
         Array.from(candidateIds).map(async (id) => {
           try {
             const owner = await publicClient.readContract({
-              address: SABLIER_V2_LOCKUP_LINEAR,
+              address: SABLIER_ADDRESS,
               abi: SABLIER_ABI,
               functionName: 'ownerOf',
               args: [BigInt(id)],
@@ -160,13 +210,13 @@ export async function getUserStreams(userAddress: Address): Promise<StreamInfo[]
       ownedIds.map(async (id) => {
         const [streamData, withdrawableAmount] = await Promise.all([
           publicClient.readContract({
-            address: SABLIER_V2_LOCKUP_LINEAR,
+            address: SABLIER_ADDRESS,
             abi: SABLIER_ABI,
             functionName: 'getStream',
             args: [BigInt(id)],
           }),
           publicClient.readContract({
-            address: SABLIER_V2_LOCKUP_LINEAR,
+            address: SABLIER_ADDRESS,
             abi: SABLIER_ABI,
             functionName: 'withdrawableAmountOf',
             args: [BigInt(id)],

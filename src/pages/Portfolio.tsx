@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { StreamsList } from '@/components/Portfolio/StreamsList'
 import { PositionsTable } from '@/components/Portfolio/PositionsTable'
+import { HistoryList } from '@/components/Portfolio/HistoryList'
 import { TrendingUp, Wallet } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { getActiveStreamsCount } from '@/lib/sablier'
@@ -96,11 +97,7 @@ export default function Portfolio() {
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-primary">Transaction History</h2>
             </div>
-            <div className="text-center text-muted-foreground py-12">
-              <Wallet className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No transaction history available yet</p>
-              <p className="text-sm">Your OVFL transactions will appear here</p>
-            </div>
+            <HistoryList />
           </TabsContent>
         </Tabs>
       </div>
