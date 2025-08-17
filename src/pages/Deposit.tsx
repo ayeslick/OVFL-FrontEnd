@@ -119,20 +119,19 @@ export default function Deposit() {
     functionName: 'BASIS_POINTS',
   })
 
-  // Safe parsing for deposit amount
+  // Helper to display amounts without decimals
+  const noDec = (s: string) => (s?.split?.('.')?.[0] || '0')
+
+  // Safe parsing for deposit amount (whole numbers only)
   const parsedDepositAmount = useMemo(() => {
     if (!ptDecimals || !depositAmount) return undefined
     
-    // Validate input format: numbers with optional decimal
-    const validFormat = /^[0-9]+(\.[0-9]+)?$/.test(depositAmount)
+    // Validate input format: whole numbers only
+    const validFormat = /^[0-9]+$/.test(depositAmount)
     if (!validFormat) return undefined
     
     const num = Number(depositAmount)
     if (num <= 0) return undefined
-    
-    // Check decimal places don't exceed token decimals
-    const decimalPlaces = depositAmount.includes('.') ? depositAmount.split('.')[1].length : 0
-    if (decimalPlaces > Number(ptDecimals)) return undefined
     
     try {
       return parseUnits(depositAmount, Number(ptDecimals))
@@ -208,7 +207,9 @@ export default function Deposit() {
       const decimals = Number(ptDecimals)
       const balance = ptBalance as bigint
       const formattedBalance = formatUnits(balance, decimals)
-      setDepositAmount(formattedBalance)
+      // Store only the integer part
+      const integerPart = formattedBalance.split('.')[0] || '0'
+      setDepositAmount(integerPart)
     }
   }
 
@@ -455,26 +456,26 @@ export default function Deposit() {
                 <div className="p-4 bg-muted/50 rounded-lg space-y-2">
                    <div className="flex justify-between">
                      <span className="text-sm text-muted-foreground">PT Balance</span>
-                       <span className="text-sm font-mono">
-                         {ptBalance && ptDecimals ? (() => {
-                           const decimals = Number(ptDecimals)
-                           const balance = ptBalance as bigint
-                           const formatted = formatUnits(balance, decimals)
-                           return `${formatted} ${marketData?.ptSymbol || 'PT'}`
-                         })() : `0 ${marketData?.ptSymbol || 'PT'}`}
-                       </span>
+                        <span className="text-sm font-mono">
+                          {ptBalance && ptDecimals ? (() => {
+                            const decimals = Number(ptDecimals)
+                            const balance = ptBalance as bigint
+                            const formatted = formatUnits(balance, decimals)
+                            return `${noDec(formatted)} ${marketData?.ptSymbol || 'PT'}`
+                          })() : `0 ${marketData?.ptSymbol || 'PT'}`}
+                        </span>
                    </div>
                    <div className="flex justify-between">
                      <span className="text-sm text-muted-foreground">ovflETH Balance</span>
-                      <span className="text-sm font-mono">
-                        {ovflETHBalance ? formatEther(ovflETHBalance as bigint) : '0'} ovflETH
-                      </span>
+                       <span className="text-sm font-mono">
+                         {ovflETHBalance ? noDec(formatEther(ovflETHBalance as bigint)) : '0'} ovflETH
+                       </span>
                    </div>
                    <div className="flex justify-between">
                      <span className="text-sm text-muted-foreground">wstETH Balance</span>
-                      <span className="text-sm font-mono">
-                        {wstETHBalance ? formatEther(wstETHBalance as bigint) : '0'} wstETH
-                      </span>
+                       <span className="text-sm font-mono">
+                         {wstETHBalance ? noDec(formatEther(wstETHBalance as bigint)) : '0'} wstETH
+                       </span>
                    </div>
                 </div>
               )}
@@ -482,13 +483,17 @@ export default function Deposit() {
               {/* Amount Input */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Amount</label>
-                <Input
-                  type="number"
-                  placeholder="0.0"
+                 <Input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="\d*"
+                  placeholder="0"
                   value={depositAmount}
-                  onChange={(e) => setDepositAmount(e.target.value)}
-                  step="0.000001"
-                  min="0"
+                  onChange={(e) => {
+                    // Sanitize to digits only
+                    const value = e.target.value.replace(/\D/g, '')
+                    setDepositAmount(value)
+                  }}
                 />
                 {marketData && depositAmount && (
                   <div className="text-sm text-muted-foreground">
@@ -598,11 +603,11 @@ export default function Deposit() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">You receive now (ovflETH)</span>
-                      <span className="font-mono text-success">{formatEther(previewData[0])} ovflETH</span>
+                      <span className="font-mono text-success">{noDec(formatEther(previewData[0]))} ovflETH</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">You stream (ETH)</span>
-                      <span className="font-mono text-success">{formatEther(previewData[1])} ETH</span>
+                      <span className="font-mono text-success">{noDec(formatEther(previewData[1]))} ETH</span>
                     </div>
                      <div className="flex justify-between">
                        <span className="text-muted-foreground">Effective Rate</span>
@@ -613,7 +618,7 @@ export default function Deposit() {
                      </div>
                      <div className="flex justify-between">
                        <span className="text-muted-foreground">Protocol Fee</span>
-                       <span className="font-mono">{requiredWstETHFee > 0n ? formatEther(requiredWstETHFee) : '0'} wstETH</span>
+                       <span className="font-mono">{requiredWstETHFee > 0n ? noDec(formatEther(requiredWstETHFee)) : '0'} wstETH</span>
                      </div>
                     <div className="flex justify-between pt-2 border-t">
                       <span className="text-muted-foreground">Stream ends in</span>
