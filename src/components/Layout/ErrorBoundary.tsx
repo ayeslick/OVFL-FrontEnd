@@ -3,22 +3,31 @@ import { toast } from '@/hooks/use-toast'
 
 interface Props {
   children: ReactNode
+  resetKey?: string
 }
 
 interface State {
   hasError: boolean
   errorId?: string
+  resetKey?: string
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props)
-    this.state = { hasError: false }
+    this.state = { hasError: false, resetKey: props.resetKey }
   }
 
   static getDerivedStateFromError(_: Error): State {
     const errorId = Date.now().toString(36) + Math.random().toString(36).substr(2)
     return { hasError: true, errorId }
+  }
+
+  static getDerivedStateFromProps(props: Props, state: State) {
+    if (props.resetKey !== state.resetKey) {
+      return { hasError: false, resetKey: props.resetKey }
+    }
+    return null
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -47,12 +56,20 @@ export class ErrorBoundary extends Component<Props, State> {
             <p className="text-muted-foreground mb-4">
               Error ID: {this.state.errorId}
             </p>
-            <button 
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
-            >
-              Refresh Page
-            </button>
+            <div className="space-x-2">
+              <button 
+                onClick={() => this.setState({ hasError: false, errorId: undefined })}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+              >
+                Try Again
+              </button>
+              <button 
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-secondary text-secondary-foreground rounded hover:bg-secondary/90"
+              >
+                Refresh Page
+              </button>
+            </div>
           </div>
         </div>
       )

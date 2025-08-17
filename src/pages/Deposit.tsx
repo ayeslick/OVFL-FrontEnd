@@ -414,7 +414,7 @@ export default function Deposit() {
                 ) : marketData ? (
                   <div className="p-3 bg-muted/50 rounded-lg">
                     <div className="font-medium">{marketData.ptSymbol}</div>
-                    <div className="text-sm text-success">{marketData.impliedAPY.toFixed(1)}% APY</div>
+                    <div className="text-sm text-success">{isFinite(marketData.impliedAPY) ? marketData.impliedAPY.toFixed(1) : '0.0'}% APY</div>
                     <div className="text-xs text-muted-foreground">
                       Status: {marketApproval?.[0] ? 'Approved' : 'Not Approved'}
                     </div>
@@ -429,11 +429,11 @@ export default function Deposit() {
                 <div className="p-4 bg-muted/50 rounded-lg space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Current Rate</span>
-                    <span className="text-sm font-mono">{marketData.currentRate.toFixed(4)} ETH</span>
+                    <span className="text-sm font-mono">{isFinite(marketData.currentRate) ? marketData.currentRate.toFixed(4) : '0.0000'} ETH</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">APY</span>
-                    <span className="text-sm font-mono text-success">{marketData.impliedAPY.toFixed(1)}%</span>
+                    <span className="text-sm font-mono text-success">{isFinite(marketData.impliedAPY) ? marketData.impliedAPY.toFixed(1) : '0.0'}%</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Expiry</span>
@@ -441,7 +441,7 @@ export default function Deposit() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">TVL</span>
-                    <span className="text-sm font-mono">${(marketData.tvl / 1e6).toFixed(1)}M</span>
+                    <span className="text-sm font-mono">${isFinite(marketData.tvl / 1e6) ? (marketData.tvl / 1e6).toFixed(1) : '0.0'}M</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Days to Expiry</span>
@@ -492,7 +492,7 @@ export default function Deposit() {
                 />
                 {marketData && depositAmount && (
                   <div className="text-sm text-muted-foreground">
-                    Price: {marketData.currentRate.toFixed(4)} PT/ETH • Discount: {((1 - marketData.currentRate) * 100).toFixed(2)}%
+                    Price: {isFinite(marketData.currentRate) ? marketData.currentRate.toFixed(4) : '0.0000'} PT/ETH • Discount: {isFinite((1 - marketData.currentRate) * 100) ? ((1 - marketData.currentRate) * 100).toFixed(2) : '0.00'}%
                   </div>
                 )}
                  <div className="flex justify-between text-xs text-muted-foreground">
@@ -588,7 +588,7 @@ export default function Deposit() {
                 <>
                   {/* Price Info */}
                   <div className="text-sm text-muted-foreground mb-4">
-                    Price: {marketData.currentRate.toFixed(4)} PT/ETH • Discount: {((1 - marketData.currentRate) * 100).toFixed(2)}%
+                    Price: {isFinite(marketData.currentRate) ? marketData.currentRate.toFixed(4) : '0.0000'} PT/ETH • Discount: {isFinite((1 - marketData.currentRate) * 100) ? ((1 - marketData.currentRate) * 100).toFixed(2) : '0.00'}%
                   </div>
                   
                   <div className="space-y-3">
@@ -606,7 +606,10 @@ export default function Deposit() {
                     </div>
                      <div className="flex justify-between">
                        <span className="text-muted-foreground">Effective Rate</span>
-                       <span className="font-mono">{(Number(formatEther(previewData[2]))).toFixed(4)} ETH</span>
+                        <span className="font-mono">{(() => {
+                          const rate = Number(formatEther(previewData[2]));
+                          return isFinite(rate) ? rate.toFixed(4) : '0.0000';
+                        })()} ETH</span>
                      </div>
                      <div className="flex justify-between">
                        <span className="text-muted-foreground">Protocol Fee</span>
