@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { useLocation } from 'react-router-dom'
-import { formatEther, parseEther } from 'viem'
+import { formatEther, parseEther, parseUnits, formatUnits } from 'viem'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -91,7 +91,7 @@ export default function Deposit() {
     functionName: 'previewStream',
     args: marketData?.id && depositAmount && ptDecimals ? [
       marketData.id as `0x${string}`, 
-      parseEther(depositAmount || '0') * BigInt(10 ** Number(ptDecimals || 18)) / BigInt(10 ** 18)
+      parseUnits(depositAmount || '0', Number(ptDecimals))
     ] : undefined,
     query: {
       enabled: !!marketData?.id && !!depositAmount && !isNaN(Number(depositAmount)) && Number(depositAmount) > 0 && !!ptDecimals,
@@ -150,9 +150,7 @@ export default function Deposit() {
     if (ptBalance && ptDecimals) {
       const decimals = Number(ptDecimals)
       const balance = ptBalance as bigint
-      const formattedBalance = decimals === 18 
-        ? formatEther(balance)
-        : (Number(balance) / (10 ** decimals)).toString()
+      const formattedBalance = formatUnits(balance, decimals)
       setDepositAmount(formattedBalance)
     }
   }
@@ -163,9 +161,7 @@ export default function Deposit() {
     try {
       setIsLoading(true)
       const decimals = Number(ptDecimals)
-      const amount = decimals === 18 
-        ? parseEther(depositAmount)
-        : BigInt(Math.floor(Number(depositAmount) * (10 ** decimals)))
+      const amount = parseUnits(depositAmount, decimals)
       
       await writeContract({
         address: marketData.ptAddress as `0x${string}`,
@@ -203,15 +199,11 @@ export default function Deposit() {
     }
 
     const decimals = Number(ptDecimals)
-    const amount = decimals === 18 
-      ? parseEther(depositAmount)
-      : BigInt(Math.floor(Number(depositAmount) * (10 ** decimals)))
+    const amount = parseUnits(depositAmount, decimals)
 
     // Validate minimum amount
     if (minPtAmount && amount < (minPtAmount as bigint)) {
-      const minFormatted = decimals === 18 
-        ? formatEther(minPtAmount as bigint)
-        : (Number(minPtAmount as bigint) / (10 ** decimals)).toString()
+      const minFormatted = formatUnits(minPtAmount as bigint, decimals)
       toast({
         title: 'Amount Too Small',
         description: `Minimum deposit is ${minFormatted} PT`,
@@ -274,13 +266,11 @@ export default function Deposit() {
     }
   }, [isApprovalConfirmed, refetchAllowance, refetchPtBalance, toast])
 
-  const isApprovalNeeded = allowance && depositAmount && ptDecimals && (() => {
+  const isApprovalNeeded = Boolean(allowance !== undefined && depositAmount && ptDecimals && (() => {
     const decimals = Number(ptDecimals)
-    const amount = decimals === 18 
-      ? parseEther(depositAmount)
-      : BigInt(Math.floor(Number(depositAmount) * (10 ** decimals)))
+    const amount = parseUnits(depositAmount, decimals)
     return amount > (allowance as bigint)
-  })()
+  })())
   
   const hasZeroPTBalance = ptBalance === 0n
   
@@ -368,16 +358,14 @@ export default function Deposit() {
                 <div className="p-4 bg-muted/50 rounded-lg space-y-2">
                    <div className="flex justify-between">
                      <span className="text-sm text-muted-foreground">PT Balance</span>
-                      <span className="text-sm font-mono">
-                        {ptBalance && ptDecimals ? (() => {
-                          const decimals = Number(ptDecimals)
-                          const balance = ptBalance as bigint
-                          const formatted = decimals === 18 
-                            ? formatEther(balance)
-                            : (Number(balance) / (10 ** decimals)).toString()
-                          return `${formatted} ${marketData?.ptSymbol || 'PT'}`
-                        })() : `0 ${marketData?.ptSymbol || 'PT'}`}
-                      </span>
+                       <span className="text-sm font-mono">
+                         {ptBalance && ptDecimals ? (() => {
+                           const decimals = Number(ptDecimals)
+                           const balance = ptBalance as bigint
+                           const formatted = formatUnits(balance, decimals)
+                           return `${formatted} ${marketData?.ptSymbol || 'PT'}`
+                         })() : `0 ${marketData?.ptSymbol || 'PT'}`}
+                       </span>
                    </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">ovflETH Balance</span>
@@ -405,13 +393,11 @@ export default function Deposit() {
                   </div>
                 )}
                  <div className="flex justify-between text-xs text-muted-foreground">
-                   <span>Balance: {ptBalance && ptDecimals ? (() => {
-                     const decimals = Number(ptDecimals)
-                     const balance = ptBalance as bigint
-                     return decimals === 18 
-                       ? formatEther(balance)
-                       : (Number(balance) / (10 ** decimals)).toString()
-                   })() : '0'} {marketData?.ptSymbol || 'PT'}</span>
+                    <span>Balance: {ptBalance && ptDecimals ? (() => {
+                      const decimals = Number(ptDecimals)
+                      const balance = ptBalance as bigint
+                      return formatUnits(balance, decimals)
+                    })() : '0'} {marketData?.ptSymbol || 'PT'}</span>
                    <button 
                      className="text-primary hover:underline"
                      onClick={handleMaxClick}
